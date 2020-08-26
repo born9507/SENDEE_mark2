@@ -10,7 +10,10 @@ def webcam():
     HEIGHT = 360
     WIDTH =  480
 
-    capture = cv2.VideoCapture(-1)
+    # capture = cv2.VideoCapture(-1)
+    capture = cv2.VideoCapture(0)
+    time.sleep(1)
+
     capture.set(3, WIDTH)
     capture.set(4, HEIGHT)
     capture.set(10, 60) #brightness
@@ -51,6 +54,8 @@ def webcam():
                 face_list.append(face[2])
             faces = np.array([faces[np.argmax(np.array(face_list))]])
 
+            print("여러명")
+
         if len(faces)==1:
             if isDetected == False:
                 isDetected = True   #
@@ -60,9 +65,10 @@ def webcam():
             face_locations = np.array([[y, x+w, y+h, x]])
             (top, right, bottom, left) = (y, x+w, y+h, x)
             cv2.rectangle(frame, (left, top), (right, bottom), (0,0,255), 2)
+
         else:     # No face detected
             if isDetected==True:
-                motordrive.headsleep()
+                # motordrive.headsleep()
                 isDetected = False #사람없으면 True
 
         frame = cv2.flip(frame, 1)
@@ -72,17 +78,20 @@ def webcam():
         # print("time :", time.time() - start)
         if (time.time() - start) < cycle_time:
             time.sleep(cycle_time - (time.time() - start))
+        print("webcam")
 
 def face_tracking():
     pass
 def armMove():
     pass 
-def test2():
-    pass     
+def test():
+    while True:
+        time.sleep(1)
+        print("test")   
 def test3():
     pass
 
 if __name__ == '__main__':
     Process(target=webcam).start()
-    # Process(target=test2).start()
+    Process(target=test).start()
     # Process(target=test3).start()
