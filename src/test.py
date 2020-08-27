@@ -1,22 +1,21 @@
-from multiprocessing import Process
+from multiprocessing import Process, shared_memory
+from multiprocessing.managers import SharedMemoryManager
 import time
 
-def test1():
-    time.sleep(5)
-    print('5초지났다.')
+def test1(data):
+    time.sleep(3)
+    data = True
+    print(data)
     
-def test2():
+def test2(data):
     for i in range(10):
         time.sleep(1)
-        print("{0}second".format(i+1))
-        
-def test3():
-    while True:
-        time.sleep(1)
-        print("병렬")
-
+        print(f"{i+1}second, {data}")
 
 if __name__ == '__main__':
-    Process(target=test1).start()
-    Process(target=test2).start()
-    Process(target=test3).start()
+    with SharedMemoryManager() as smm:
+        data = smm.SharedMemory(size=128)
+        data = False
+        print(data)
+        Process(target=test1, args=(data, )).start()
+        Process(target=test2, args=(data, )).start()
