@@ -1,4 +1,4 @@
-from multiprocessing import Process
+from multiprocessing import Process, sharedctypes
 import time, cv2
 import numpy as np
 ####RPi####
@@ -6,11 +6,16 @@ import numpy as np
 # import RPi.GPIO as GPIO
 
 # 웹캠에서는 얼굴 인식하고 변수에 저장하는 것만
-def webcam():
+def webcam(O_isDetected, O_rgb_for_face, O_gray_for_emotion, O_face_locations):
     HEIGHT = 360
     WIDTH =  480
 
-    capture = cv2.VideoCapture(-1)
+    ## 윈도는 0, 라즈베리파이는 -1 ##
+    # capture = cv2.VideoCapture(-1)
+    capture = cv2.VideoCapture(0)
+
+    time.sleep(1)
+
     capture.set(3, WIDTH)
     capture.set(4, HEIGHT)
     capture.set(10, 60) #brightness
@@ -37,10 +42,12 @@ def webcam():
         ret, frame = capture.read()
         if not ret: break
 
+        #### 반환
         rgb_for_face = frame[::]
         gray_for_emotion = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        faces = face_cascade.detectMultiScale(gray_for_emotion, 1.3, 5) #문제는 이부분이 수평만 인지한다, 기울어진 얼굴도 인식하도록
+        faces = face_cascade.detectMultiScale(gray_for_emotion, 1.3, 5) 
+        #문제는 이부분이 수평만 인지한다, 기울어진 얼굴도 인식하도록
 
         cv2.putText(frame, info, (5, 15), font, 0.5, (255, 0, 255), 1)
         #피클 파일에 쓰는 부분을 없애고, 프로세스간에 변수를 공유하도록 한다.
@@ -49,6 +56,7 @@ def webcam():
 
             for face in faces:
                 face_list.append(face[2])
+            #face[2] 가 얼굴의 width, width가 제일 큰 id 를 뽑아서, faces 에서 그 id에 해당하는 face를 nparray 로 다시 묶음
             faces = np.array([faces[np.argmax(np.array(face_list))]])
 
         if len(faces)==1:
@@ -58,31 +66,56 @@ def webcam():
             [x, y, w, h] = faces[0]
             
             face_locations = np.array([[y, x+w, y+h, x]])
+
+            ##밖으로 변수 빼주기
+            O_face_locations.send(face_locations)
+
             (top, right, bottom, left) = (y, x+w, y+h, x)
             cv2.rectangle(frame, (left, top), (right, bottom), (0,0,255), 2)
         else:     # No face detected
             if isDetected==True:
-                motordrive.headsleep()
+                # motordrive.headsleep()
                 isDetected = False #사람없으면 True
 
         frame = cv2.flip(frame, 1)
-        # cv2.imshow('frame', frame)
+        cv2.imshow('frame', frame)
         if cv2.waitKey(1) == ord('q'): break
 
         # print("time :", time.time() - start)
         if (time.time() - start) < cycle_time:
             time.sleep(cycle_time - (time.time() - start))
+        
+        O_isDetected.send(isDetected)
+        # O_isDetected.close
+
+        # O_rgb_for_face.send(rgb_for_face)
+        # O_rgb_for_face.close
+        
+        # O_gray_for_emotion.send(gray_for_emotion)
+        # O_gray_for_emotion.close
+        
+
 
 def face_tracking():
     pass
-def armMove():
+def armMove():  
     pass 
-def test2():
-    pass     
-def test3():
-    pass
+def test(conn):
+    while True:
+        # time.sleep(0.1)     
+        print(conn.recv())
 
 if __name__ == '__main__':
-    Process(target=webcam).start()
-    # Process(target=test2).start()
+    I_isDetected, O_isDetected = Pipe()
+    I_rgb_for_face, O_rgb_for_face = Pipe()
+    I_gray_for_emotion, O_gray_for_emotion = Pipe()
+    I_face_locations, O_face_locations = Pipe()
+    
+    Process(target=webcam, args=(O_isDetected, O_rgb_for_face, O_gray_for_emotion, O_face_locations,  )).start()
+    Process(target=test, args=(I_isDetected, )).start()
+    
+    # print(parent_conn.recv())
+    # Process(target=test, args=(isDetected)).start()
+    # print(isDetected)
+
     # Process(target=test3).start()
