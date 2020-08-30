@@ -1,4 +1,4 @@
-# 라즈베리파이 GPIO 핀 사용가능하도록 하는 라이브러리
+# -*- coding: utf-8 -*-
 import RPi.GPIO as GPIO
 from time import sleep
 
