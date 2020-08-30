@@ -47,17 +47,12 @@ def webcam():
     speed = 10
     isDetected = False
 
-    cycle_time = 0.05 #1프레임당 시간
+    cycle_time = 0.05 # 1 frame time
 
-    ### 영상 캡쳐 대신에 사진 캡쳐로 하면 cycle time 증가해도 딜레이 없지 않을까?
     while True:
-        start = time.time()  # 시작 시간 저장
-        ##감정표현이 진행중인지 읽어오기
-        # with open("pkl/onprocess.pkl", "rb") as file:
-        #     onprocess = pickle.load(file)
-        #     file.close()
+        start = time.time() 
         
-        ## 진행중이면 멈추기
+        ## stop when 
         # if onprocess == True:
         #     # GPIO.cleanup()
         #     time.sleep(3.5)
@@ -72,13 +67,11 @@ def webcam():
 
         cv2.putText(frame, info, (5, 15), font, 0.5, (255, 0, 255), 1)
 
-        #############10프레임에 한번 시행되는 부분###############
+        ############# once in 10 frames ###############
         if count==speed:
-            #rgb 이미지 피클로 저장, 얼굴인식
             with open("pkl/rgb_for_face.pkl", "wb") as file:
                 pickle.dump(rgb_for_face, file) 
                 file.close()
-            #gray 이미지 피클로 저장, 표정
             with open("pkl/gray_for_emotion.pkl", "wb") as file:
                 pickle.dump(gray_for_emotion, file)
                 file.close()
@@ -130,7 +123,7 @@ def webcam():
         else:     # No face detected
             if isDetected==True:
                 motordrive.headsleep()
-                isDetected = False #사람없으면 True
+                isDetected = False #no man True
                 with open("pkl/isDetected.pkl", "wb") as file:
                     pickle.dump(isDetected, file)
                     file.close()
@@ -186,10 +179,10 @@ def main():
             with open("pkl/isDetected.pkl", "rb") as file:
                 isDetected = pickle.load(file)
                 file.close()
-            if isDetected == True: #인식이 된 상태
+            if isDetected == True: #recognized
 
                 emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
-                #5번의 감정을 평균낸다
+                # 
                 # count=0
                 # while count==3:
                 #     prediction = face_emo(model)
@@ -204,7 +197,7 @@ def main():
 
                 name = face_reco()
                 print(name)
-                ###################### 행동 #####################################
+                ###################### action #####################################
                 # onprocess = True
                 # with open("pkl/onprocess.pkl", "wb") as file:
                 #     pickle.dump(onprocess, file)
@@ -215,15 +208,14 @@ def main():
                 # with open("pkl/onprocess.pkl", "wb") as file:
                 #     pickle.dump(onprocess, file)
                 ################################################################
-            else: #인식이 안된 상태
+            else: # not recognized
                 #######################
                 display.noface()
                 #######################
-
-            #코드 실행 시간
+ 
             print("time :", (time.time() - start), "\n") 
             
-            #cycle_time 초마다 한번 실행
+            #cycle_time, 1 action
             if (time.time() - start) < cycle_time:
                 time.sleep(cycle_time - (time.time() - start))
 
