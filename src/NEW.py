@@ -1,4 +1,4 @@
-from multiprocessing import Process, sharedctypes
+from multiprocessing import Process, Value, Array
 import time, cv2
 import numpy as np
 ####RPi####
@@ -6,7 +6,9 @@ import numpy as np
 # import RPi.GPIO as GPIO
 
 # 웹캠에서는 얼굴 인식하고 변수에 저장하는 것만
-def webcam(O_isDetected, O_rgb_for_face, O_gray_for_emotion, O_face_locations):
+def webcam(
+    # O_isDetected, O_rgb_for_face, O_gray_for_emotion, O_face_locations
+    ):
     HEIGHT = 360
     WIDTH =  480
 
@@ -42,7 +44,8 @@ def webcam(O_isDetected, O_rgb_for_face, O_gray_for_emotion, O_face_locations):
         ret, frame = capture.read()
         if not ret: break
 
-        #### 반환
+        # 자르지 않은 이미지 전체 (흑백: 얼굴인식,  컬러: 표정 인식)
+        # 생각해보면 사람도 얼굴만 따로 떼놓고 인식하지 않으니 타당함
         rgb_for_face = frame[::]
         gray_for_emotion = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -68,7 +71,7 @@ def webcam(O_isDetected, O_rgb_for_face, O_gray_for_emotion, O_face_locations):
             face_locations = np.array([[y, x+w, y+h, x]])
 
             ##밖으로 변수 빼주기
-            O_face_locations.send(face_locations)
+            # O_face_locations.send(face_locations)
 
             (top, right, bottom, left) = (y, x+w, y+h, x)
             cv2.rectangle(frame, (left, top), (right, bottom), (0,0,255), 2)
@@ -85,7 +88,7 @@ def webcam(O_isDetected, O_rgb_for_face, O_gray_for_emotion, O_face_locations):
         if (time.time() - start) < cycle_time:
             time.sleep(cycle_time - (time.time() - start))
         
-        O_isDetected.send(isDetected)
+        # O_isDetected.send(isDetected)
         # O_isDetected.close
 
         # O_rgb_for_face.send(rgb_for_face)
@@ -94,25 +97,31 @@ def webcam(O_isDetected, O_rgb_for_face, O_gray_for_emotion, O_face_locations):
         # O_gray_for_emotion.send(gray_for_emotion)
         # O_gray_for_emotion.close
         
+        print(f"isDetected: {type(int(isDetected))}")
+        print(f"rgb_for_face: {type(list(rgb_for_face))}  len: {len(list(rgb_for_face))}")
+        print(f"gray_for_emotion: {type(list(gray_for_emotion))}  len: {len(list(gray_for_emotion))}")
+        if len(faces)==1:
+            print(f"face locations: {type(list(face_locations))}  len: {len(list(face_locations))}")
+        print('\n')
 
 
 def face_tracking():
     pass
 def armMove():  
     pass 
-def test(conn):
+def test():
     while True:
-        # time.sleep(0.1)     
-        print(conn.recv())
+        time.sleep(1)     
+        print("test")
 
 if __name__ == '__main__':
-    I_isDetected, O_isDetected = Pipe()
-    I_rgb_for_face, O_rgb_for_face = Pipe()
-    I_gray_for_emotion, O_gray_for_emotion = Pipe()
-    I_face_locations, O_face_locations = Pipe()
-    
-    Process(target=webcam, args=(O_isDetected, O_rgb_for_face, O_gray_for_emotion, O_face_locations,  )).start()
-    Process(target=test, args=(I_isDetected, )).start()
+    # Value 나 Array 로 공유하는 데이터들은 모두 _ 를 앞에 붙이겠다
+    _isDetected = Value('i', 0)
+    _rgb_for_face = Array('d', [0 for i in range(360)])
+    _gray_for_emotion = Array('d', [0 for i in range(360)])
+    _face_locations = Array('d', [0])
+    Process(target=webcam, args=( )).start()
+    # Process(target=test, args=()).start()
     
     # print(parent_conn.recv())
     # Process(target=test, args=(isDetected)).start()
