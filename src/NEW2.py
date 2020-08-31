@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from multiprocessing import Process
 import motordrive
-import pickle
+import _pickle as pickle
 import time
 import cv2
 import RPi.GPIO as GPIO
@@ -76,7 +76,6 @@ def webcam():
             with open("pkl/gray_for_emotion.pkl", "wb") as file:
                 pickle.dump(gray_for_emotion, file)
                 file.close()
-            # print("write!")
             count = 0
         else:
             count += 1
