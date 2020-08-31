@@ -12,10 +12,11 @@ WIDTH =  480
 capture = cv2.VideoCapture(-1)
 capture.set(3, WIDTH)
 capture.set(4, HEIGHT)
-capture.set(10, 60) #brightness
-capture.set(11, 60) #contrast
-capture.set(21, 0.25) #auto exposure
-#capture.set(5, 60)
+# capture.set(10, 60) #brightness
+# capture.set(11, 60) #contrast
+# capture.set(21, 0.25) #auto exposure
+# capture.set(15, 0.1)
+# capture.set(5, 60)
 
 hor_error_Sum = 0
 hor_error_Prev = 0
@@ -125,7 +126,7 @@ while True:
             
 
     frame = cv2.flip(frame, 1)
-    # cv2.imshow('frame', frame)
+    cv2.imshow('frame', frame)
     if cv2.waitKey(1) == ord('q'): break
 
     # print("time :", time.time() - start)

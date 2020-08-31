@@ -7,7 +7,6 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.layers import MaxPooling2D
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import os
-import pickle
 
 def model_basic():    
     model = Sequential()

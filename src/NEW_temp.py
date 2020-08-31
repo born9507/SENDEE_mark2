@@ -7,12 +7,13 @@ import cv2
 import RPi.GPIO as GPIO
 import numpy as np
 import face_recognition
-import os
+import os, gc
 from keras.utils import np_utils
 from keras.datasets import mnist
 from keras.models import Sequential
 from keras.models import load_model
 from keras.layers import Dense, Activation, BatchNormalization
+
 import model as md
 import display
 import recognition
@@ -41,6 +42,7 @@ def webcam():
     ##########
 
     face_cascade = cv2.CascadeClassifier('haar/haarcascade_frontalface_alt2.xml')
+    # face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
     info = ''
     font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -72,10 +74,8 @@ def webcam():
         if count==speed:
             with open("pkl/rgb_for_face.pkl", "wb") as file:
                 pickle.dump(rgb_for_face, file) 
-                file.close()
             with open("pkl/gray_for_emotion.pkl", "wb") as file:
                 pickle.dump(gray_for_emotion, file)
-                file.close()
             count = 0
         else:
             count += 1
@@ -93,7 +93,6 @@ def webcam():
                 isDetected = True   #
                 with open("pkl/isDetected.pkl", "wb") as file:
                     pickle.dump(isDetected, file)
-                    file.close()
             # for (x, y, w, h) in faces:
             [x, y, w, h] = faces[0]
             
@@ -103,7 +102,6 @@ def webcam():
 
             with open("pkl/face_locations.pkl", "wb") as file:
                 pickle.dump(face_locations, file)
-                file.close()
             
             x_pos = x + w/2
             y_pos = y + h/2
@@ -126,13 +124,11 @@ def webcam():
                 isDetected = False #no man True
                 with open("pkl/isDetected.pkl", "wb") as file:
                     pickle.dump(isDetected, file)
-                    file.close()
             else:
                 motordrive.headsleep()
-                pass                
 
         frame = cv2.flip(frame, 1)
-        # cv2.imshow('frame', frame)
+        cv2.imshow('frame', frame)
         if cv2.waitKey(1) == ord('q'): break
 
         # print("time :", time.time() - start)
@@ -147,9 +143,10 @@ def armMove():
     while True:
         try:
             start = time.time()
-
+            gc.disable()
             with open("pkl/emotion.pkl", "rb") as file:
                 emotion = pickle.load(file)
+            gc.enable()
             
             if emotion == 'neutral1':
                 cycle_time= 11*90/1000
@@ -165,7 +162,7 @@ def armMove():
             pass
 
 def main():
-    img2encoding()
+    recognition.img2encoding()
     model = md.model_basic()
     model.load_weights('models/model.h5')
 
@@ -175,9 +172,11 @@ def main():
     while True:
         try:
             start = time.time() 
+            # gc.disable()
             with open("pkl/isDetected.pkl", "rb") as file:
                 isDetected = pickle.load(file)
                 file.close()
+            # gc.enable()
             if isDetected == True: #recognized
 
                 emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
@@ -190,11 +189,11 @@ def main():
                 # prediction = prediction_sum
                 # prediction_sum = [0,0,0,0,0,0,0]
 
-                prediction = face_emo(model)
+                prediction = recognition.face_emo(model)
                 emotion = emotion_dict[np.argmax(prediction)]
                 print(emotion)
 
-                name = face_reco()
+                name = recognition.face_reco()
                 print(name)
                 ###################### action #####################################
                 # onprocess = True
@@ -208,9 +207,7 @@ def main():
                 #     pickle.dump(onprocess, file)
                 ################################################################
             else: # not recognized
-                #######################
                 display.noface()
-                #######################
  
             print("time :", (time.time() - start), "\n") 
             

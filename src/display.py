@@ -1,7 +1,7 @@
 import cv2
 import time
 import random
-import pickle
+import _pickle as pickle
 
 
 def display(filename, name, emotion):
