@@ -129,8 +129,7 @@ def webcam():
                     file.close()
             else:
                 motordrive.headsleep()
-                print('')
-                
+                pass                
 
         frame = cv2.flip(frame, 1)
         # cv2.imshow('frame', frame)
