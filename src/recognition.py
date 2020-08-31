@@ -1,5 +1,5 @@
 import time
-import pickle
+import _pickle as pickle
 import cv2
 import face_recognition
 import os
