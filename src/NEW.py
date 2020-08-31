@@ -1,23 +1,31 @@
-from multiprocessing import Process, Value, Array
-import time, cv2
+# -*- coding: utf-8 -*-
+from multiprocessing import Process
+import motordrive
+import _pickle as pickle
+import time
+import cv2
+import RPi.GPIO as GPIO
 import numpy as np
-####RPi####
-# import motordrive
-# import RPi.GPIO as GPIO
+import face_recognition
+import os
+from keras.utils import np_utils
+from keras.datasets import mnist
+from keras.models import Sequential
+from keras.models import load_model
+from keras.layers import Dense, Activation, BatchNormalization
+import model as md
+import display
+import recognition
 
-# 웹캠에서는 얼굴 인식하고 변수에 저장하는 것만
-def webcam(
-    # O_isDetected, O_rgb_for_face, O_gray_for_emotion, O_face_locations
-    ):
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+
+def webcam():
+
     HEIGHT = 360
     WIDTH =  480
 
-    ## 윈도는 0, 라즈베리파이는 -1 ##
-    # capture = cv2.VideoCapture(-1)
-    capture = cv2.VideoCapture(0)
-
-    time.sleep(1)
-
+    capture = cv2.VideoCapture(-1)
     capture.set(3, WIDTH)
     capture.set(4, HEIGHT)
     capture.set(10, 60) #brightness
@@ -36,95 +44,187 @@ def webcam(
     info = ''
     font = cv2.FONT_HERSHEY_SIMPLEX
 
+    count = 0
+    speed = 10
     isDetected = False
-    cycle_time = 0.05 #1프레임당 시간
+
+    cycle_time = 0.05 # 1 frame time
 
     while True:
-        start = time.time()
+        start = time.time() 
+        
+        ## stop when 
+        # if onprocess == True:
+        #     # GPIO.cleanup()
+        #     time.sleep(3.5)
+        # else: 
         ret, frame = capture.read()
         if not ret: break
 
-        # 자르지 않은 이미지 전체 (흑백: 얼굴인식,  컬러: 표정 인식)
-        # 생각해보면 사람도 얼굴만 따로 떼놓고 인식하지 않으니 타당함
         rgb_for_face = frame[::]
         gray_for_emotion = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        faces = face_cascade.detectMultiScale(gray_for_emotion, 1.3, 5) 
-        #문제는 이부분이 수평만 인지한다, 기울어진 얼굴도 인식하도록
+        faces = face_cascade.detectMultiScale(gray_for_emotion, 1.3, 5)
 
         cv2.putText(frame, info, (5, 15), font, 0.5, (255, 0, 255), 1)
-        #피클 파일에 쓰는 부분을 없애고, 프로세스간에 변수를 공유하도록 한다.
+
+        ############# once in 10 frames ###############
+        if count==speed:
+            with open("pkl/rgb_for_face.pkl", "wb") as file:
+                pickle.dump(rgb_for_face, file) 
+                file.close()
+            with open("pkl/gray_for_emotion.pkl", "wb") as file:
+                pickle.dump(gray_for_emotion, file)
+                file.close()
+            count = 0
+        else:
+            count += 1
+        ###################################################
+        
         if len(faces)>1:
             face_list = []
 
             for face in faces:
                 face_list.append(face[2])
-            #face[2] 가 얼굴의 width, width가 제일 큰 id 를 뽑아서, faces 에서 그 id에 해당하는 face를 nparray 로 다시 묶음
             faces = np.array([faces[np.argmax(np.array(face_list))]])
 
         if len(faces)==1:
             if isDetected == False:
                 isDetected = True   #
+                with open("pkl/isDetected.pkl", "wb") as file:
+                    pickle.dump(isDetected, file)
+                    file.close()
             # for (x, y, w, h) in faces:
             [x, y, w, h] = faces[0]
             
             face_locations = np.array([[y, x+w, y+h, x]])
-
-            ##밖으로 변수 빼주기
-            # O_face_locations.send(face_locations)
-
             (top, right, bottom, left) = (y, x+w, y+h, x)
             cv2.rectangle(frame, (left, top), (right, bottom), (0,0,255), 2)
+
+            with open("pkl/face_locations.pkl", "wb") as file:
+                pickle.dump(face_locations, file)
+                file.close()
+            
+            x_pos = x + w/2
+            y_pos = y + h/2
+
+            x_pos = 2 * (x_pos - WIDTH/2) / WIDTH + 0.1
+            y_pos = -2 * (y_pos - (HEIGHT/2)) / HEIGHT
+
+            ###########
+            hor_error_Sum = hor_error_Sum + x_pos
+            ver_error_Sum = ver_error_Sum + y_pos
+            motordrive.MPIDCtrl(x_pos, 0.05, hor_error_Sum, hor_error_Prev)
+            past_dc = motordrive.Servo(y_pos, 0.05, past_dc, ver_error_Sum, ver_error_Prev)
+            hor_error_Prev = x_pos
+            ver_error_Prev = y_pos
+            ###########
+
         else:     # No face detected
             if isDetected==True:
-                # motordrive.headsleep()
-                isDetected = False #사람없으면 True
+                motordrive.headsleep()
+                isDetected = False #no man True
+                with open("pkl/isDetected.pkl", "wb") as file:
+                    pickle.dump(isDetected, file)
+                    file.close()
+            else:
+                motordrive.headsleep()
+                pass                
 
         frame = cv2.flip(frame, 1)
-        cv2.imshow('frame', frame)
+        # cv2.imshow('frame', frame)
         if cv2.waitKey(1) == ord('q'): break
 
         # print("time :", time.time() - start)
         if (time.time() - start) < cycle_time:
             time.sleep(cycle_time - (time.time() - start))
-        
-        # O_isDetected.send(isDetected)
-        # O_isDetected.close
+        print(isDetected)
 
-        # O_rgb_for_face.send(rgb_for_face)
-        # O_rgb_for_face.close
-        
-        # O_gray_for_emotion.send(gray_for_emotion)
-        # O_gray_for_emotion.close
-        
-        print(f"isDetected: {type(int(isDetected))}")
-        print(f"rgb_for_face: {type(list(rgb_for_face))}  len: {len(list(rgb_for_face))}")
-        print(f"gray_for_emotion: {type(list(gray_for_emotion))}  len: {len(list(gray_for_emotion))}")
-        if len(faces)==1:
-            print(f"face locations: {type(list(face_locations))}  len: {len(list(face_locations))}")
-        print('\n')
+    GPIO.cleanup()
 
-
-def face_tracking():
-    pass
-def armMove():  
-    pass 
-def test():
+def armMove():
+    cycle_time = 0
     while True:
-        time.sleep(1)     
-        print("test")
+        try:
+            start = time.time()
 
-if __name__ == '__main__':
-    # Value 나 Array 로 공유하는 데이터들은 모두 _ 를 앞에 붙이겠다
-    _isDetected = Value('i', 0)
-    _rgb_for_face = Array('d', [0 for i in range(360)])
-    _gray_for_emotion = Array('d', [0 for i in range(360)])
-    _face_locations = Array('d', [0])
-    Process(target=webcam, args=( )).start()
-    # Process(target=test, args=()).start()
-    
-    # print(parent_conn.recv())
-    # Process(target=test, args=(isDetected)).start()
-    # print(isDetected)
+            with open("pkl/emotion.pkl", "rb") as file:
+                emotion = pickle.load(file)
+            
+            if emotion == 'neutral1':
+                cycle_time= 11*90/1000
+            else:
+                cycle_time = 33*90/1000
+            
+            # motordrive.emoreact(emotion)
+            
+            if (time.time() - start) < cycle_time:
+                time.sleep(cycle_time - (time.time() - start))
 
-    # Process(target=test3).start()
+        except EOFError:
+            pass
+
+def main():
+    img2encoding()
+    model = md.model_basic()
+    model.load_weights('models/model.h5')
+
+    cycle_time = 1
+
+
+    while True:
+        try:
+            start = time.time() 
+            with open("pkl/isDetected.pkl", "rb") as file:
+                isDetected = pickle.load(file)
+                file.close()
+            if isDetected == True: #recognized
+
+                emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
+                # 
+                # count=0
+                # while count==3:
+                #     prediction = face_emo(model)
+                #     prediction_sum = prediction_sum + prediction
+                #     count+=1
+                # prediction = prediction_sum
+                # prediction_sum = [0,0,0,0,0,0,0]
+
+                prediction = face_emo(model)
+                emotion = emotion_dict[np.argmax(prediction)]
+                print(emotion)
+
+                name = face_reco()
+                print(name)
+                ###################### action #####################################
+                # onprocess = True
+                # with open("pkl/onprocess.pkl", "wb") as file:
+                #     pickle.dump(onprocess, file)
+
+                display.emo2reaction(emotion, name)  ##unknown sangwon 
+
+                # onprocess = False
+                # with open("pkl/onprocess.pkl", "wb") as file:
+                #     pickle.dump(onprocess, file)
+                ################################################################
+            else: # not recognized
+                #######################
+                display.noface()
+                #######################
+ 
+            print("time :", (time.time() - start), "\n") 
+            
+            #cycle_time, 1 action
+            if (time.time() - start) < cycle_time:
+                time.sleep(cycle_time - (time.time() - start))
+
+        except EOFError:
+            pass
+        except pickle.UnpicklingError as e:
+            pass
+        pass
+
+if __name__ == "__main__":
+    Process(target=webcam).start()
+    Process(target=armMove).start()
+    Process(target=main).start()
