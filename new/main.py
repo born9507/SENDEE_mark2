@@ -1,21 +1,38 @@
 from multiprocessing import Process
+from shared_ndarray import SharedNDArray
 import cv2
 import numpy as np
 import time 
+import picamera
 
 
 def view():
-    camera = picamera.PiCamera()
-    output = np.empty((240, 320, 3), dtype=np.uint8)
-    camera.resolution = (320, 240)
+    HEIGHT = 360
+    WIDTH =  480
+
+    capture = cv2.VideoCapture(-1)
+    capture.set(3, WIDTH)
+    capture.set(4, HEIGHT)
+
+    # face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    info = ''
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
     while True:
         start = time.time()
-        camera.capture(output, format="rgb")
-        print(f"cycle time: {time.time() - start}")
-        # return output
+        
+        ret, frame = capture.read()
+        if not ret: break
+
+        print(frame.shape)  
+
+        print(f"cycle time: {time.time()-start}" )
 
 if __name__ == "__main__":
-    while True:
-        p = Process(target=view)
-        p.start()
-        p.join()
+    try:
+        frame = SharedNDArray((360 , 480, 3))
+        while True:
+            Process(target=view, args=(frame,)).start
+            print(frame)
+    finally:
+        frame.unlink()
