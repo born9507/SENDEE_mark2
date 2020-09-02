@@ -91,6 +91,9 @@ while True:
         [x, y, w, h] = faces[0]
         
         face_locations = np.array([[y, x+w, y+h, x]])
+        print(face_locations)
+        print(type(face_locations))
+        print(face_locations.shape)
         (top, right, bottom, left) = (y, x+w, y+h, x)
         cv2.rectangle(frame, (left, top), (right, bottom), (0,0,255), 2)
 
@@ -126,8 +129,8 @@ while True:
             
 
     frame = cv2.flip(frame, 1)
-    cv2.imshow('frame', frame)
-    if cv2.waitKey(1) == ord('q'): break
+    # cv2.imshow('frame', frame)
+    # if cv2.waitKey(1) == ord('q'): break
 
     # print("time :", time.time() - start)
     if (time.time() - start) < cycle_time:
