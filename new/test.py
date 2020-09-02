@@ -4,11 +4,15 @@ from shared_ndarray import SharedNDArray
 import numpy as np
 import time
 import cv2
-# import face_recognition
+import json
+import face_recognition
 
 # model
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Dropout, Flatten
+
+#recognition
+from keras.models import load_model
 
 # view 함수는 카메라로 촬영한 것을 frame 변수에 저장(np.array, dtype=float64)
 def view(frame, is_running, ):
@@ -25,7 +29,7 @@ def view(frame, is_running, ):
 
 ######################################################################
 
-# face_tracking 함수는 얼굴 위치를 받아서 모터 제어까지
+# face_tracking 함수는 얼굴 위치를 계산해서 내보내고, 모터 제어
 def face_tracking(frame, face_location, is_running, is_detected, ):
     face_cascade = cv2.CascadeClassifier('haar/haarcascade_frontalface_alt2.xml')
     while True:
@@ -53,7 +57,10 @@ def face_tracking(frame, face_location, is_running, is_detected, ):
             x_pos = x + w/2
             y_pos = y + h/2 
             #### 여기 아래에다 모터 제어 파트 쓰면 될 듯 ####
-        
+
+
+            ##############################################
+    
         # No face detected
         else:
             if is_detected.value == 1:
@@ -67,37 +74,34 @@ def face_tracking(frame, face_location, is_running, is_detected, ):
 # 얼굴 인식은 is_detected 일때만 돌아가도록 하자
 # 얼굴 인식과 표정 인식을 멀티프로세싱을 돌려 빠르게 처리하도록
 # 인식하고, 인식 횟수가 몇회 이상이면 
-def recognition(frame, face_location_, is_detected, ):
+def recognition(frame, face_location_, emotion, is_detected, ):
+    model = model()
+    model.load_weights('model/model.h5')
+    # 아는 
     while True:
         if is_detected.value == 1:
-            rgb = frame.array.astype(np
-            .uint8)
+            rgb = frame.array.astype(np.uint8)
             face_location = face_location_.array.astype(np.uint8)
-            print(face_location)
-            Process(target=face_reco, args=(rgb, face_location, )).start()
-            Process(target=face_emo, args=(rgb, face_location, )).start()
+            face_reco = Process(target=face_reco, args=(rgb, face_location, ))
+            face_reco.start()
+            face_reco.join()
+            # face_emo = Process(target=face_emo, args=(rgb, face_location, model, ))
+            # face_emo.start()
+            # face_emo.join()
         else:
             time.sleep(0.03)
             pass
 
-def face_reco():
-    ##rgb_for_face 불러오기
-    with open("pkl/rgb_for_face.pkl", "rb") as file:
-        rgb_for_face = pickle.load(file)
-        file.close()
-    ##face_locations 불러오기
-    with open("pkl/face_locations.pkl", "rb") as file:
-        face_location = pickle.load(file)
-        file.close()
-    with open("pkl/known_face_names.pkl", "rb") as file:
-        known_face_names = pickle.load(file)
-        file.close()
-    with open("pkl/known_face_encodings.pkl", "rb") as file:
-        known_face_encodings = pickle.load(file)
-        file.close()
+def face_reco(rgb, face_location, ):
+    with open("face/face_list.json", "r") as f:
+        face_list = json.load(f)
+    
+    known_face_names = face_list.keys()
+    known_face_encodings = np.array(face_list.values())
+    print(known_face_encodings)
     
     ##불러온 파일 이용해서 인코딩 구한다
-    face_encoding = face_recognition.face_encodings(rgb_for_face, face_location)
+    face_encoding = face_recognition.face_encodings(rgb, face_location)
     matches = face_recognition.compare_faces(known_face_encodings, face_encoding[0])
     face_distances = face_recognition.face_distance(known_face_encodings, face_encoding[0])
     best_match_index = np.argmin(face_distances)
@@ -109,16 +113,10 @@ def face_reco():
     
     return name
 
-def face_emo(model):
-    with open("pkl/gray_for_emotion.pkl", "rb") as file:
-        gray_for_emotion = pickle.load(file)
-        file.close()
-    with open("pkl/face_locations.pkl", "rb") as file:
-        face_location = pickle.load(file)
-        file.close()
-
+def face_emo(rgb, face_location, model,):
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    
     # model = load_model("models/20200622_2242_model.h5")
-    model = model
     # emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
     for (top, right, bottom, left) in face_location:
         roi_gray = gray_for_emotion[top:bottom, left:right]
@@ -169,8 +167,44 @@ def model():
   
 ############################################################################
 
+# 언노운 일정 횟수 이상 들어오면 이 함수 실행하도록
+
+def img2encoding():
+    with open("face/face_list.json", "r") as f:
+        face_list = json.load(f)
+    
+    names = []
+    images = os.listdir("face/img/")
+    for image in images:
+        name = image.split('.')[0]
+        names.append(name)
+        if name in face_list.keys():
+            pass
+        else:
+            name_image = face_recognition.load_image_file(f"face/img/{image}")
+            name_encoding = face_recognition.face_encodings(name_image)[0]
+            face_list[name] = name_encoding.tolist()
+    
+    for key, val in list(face_list.items()):
+        if key not in names:
+            del face_list[key]
+
+    with open("face/face_list.json", "w") as f:
+        json.dump(face_list, f, indent=2)
+
+# cv2 로 사진 캡쳐해서 찍기
+def save_img():
+    pass
+
+# 해당 사진 지우기(웹 or 앱으로 처리)
+def delete_img():
+    pass
+
+####################################################################################
+
 if __name__ == "__main__":
     try:
+        save_img()
         frame = SharedNDArray((480, 640, 3))
         face_location = SharedNDArray((1,4))
         print(face_location.array)
@@ -185,7 +219,7 @@ if __name__ == "__main__":
         
         view = Process(target=view, args=(frame, view_running, ))
         face_tracking = Process(target=face_tracking, args=(frame, face_location, face_tracking_running, is_detected, ))
-        recognition = Process(target=recognition, args=(frame, face_location, is_detected, ))
+        recognition = Process(target=recognition, args=(frame, face_location, emotion, is_detected, ))
 
         view.start()
         face_tracking.start()
