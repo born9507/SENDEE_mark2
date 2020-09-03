@@ -110,14 +110,15 @@ def face_tracking(frame, face_location, is_running, is_detected, ):
 # 얼굴 인식과 표정 인식을 멀티프로세싱을 돌려 빠르게 처리하도록
 # 인식하고, 인식 횟수가 몇회 이상이면 
 def recognition(frame, face_location_, emotion, is_detected, ):
-    # model = model()
-    # model.load_weights('model/model.h5')
+    model = model()
+    model.load_weights('model/model.h5')
     # 아는 
     while True:
         if is_detected.value == 1:
             rgb = frame.array.astype(np.uint8)
             face_location = face_location_.array.astype(np.uint8)
-            face_reco = Process(target=face_reco, args=(rgb, face_location, ))
+            face_reco = Process(target=face_reco, args=(rgb, face_location, )) # 이 부분이 문제.
+            # 함수 안에서 다른 함수를 호출할 수는 있지만, 멀티프로세싱으로 돌리지는 못하나? 되는데... 일단 다른것부터
             face_reco.start()
             face_reco.join()
             # face_emo = Process(target=face_emo, args=(rgb, face_location, model, ))
@@ -131,8 +132,8 @@ def face_reco(rgb, face_location, ):
     with open("face/face_list.json", "r") as f:
         face_list = json.load(f)
     
-    known_face_names = face_list.keys()
-    known_face_encodings = np.array(face_list.values())
+    known_face_names = face_list.keys() # list
+    known_face_encodings = np.array(face_list.values()) # numpy.ndarray
     print(known_face_encodings)
     
     ##불러온 파일 이용해서 인코딩 구한다
@@ -167,11 +168,13 @@ def face_emo(rgb, face_location, model,):
 
 ##################################################################################
 
+# 클래스를 활용해야 하나? 
+
 def expression():
-    # Process(target=).start()
-    # Process(target=).start()
-    # Process(target=).start()
-    # Process(target=).start()
+    display = Process(target=display).start()
+    left_arm = Process(target=left_arm).start()
+    right_arm = Process(target=right_arm).start()
+    doridori = Process(target=doridori).start()
     pass
 def display(): pass
 def left_arm(): pass
