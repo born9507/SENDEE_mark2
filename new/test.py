@@ -34,10 +34,44 @@ def face_tracking(frame, face_location, is_running, is_detected, ):
     face_cascade = cv2.CascadeClassifier('haar/haarcascade_frontalface_alt2.xml')
     while True:
         uint8 = frame.array.astype(np.uint8)
-        gray = cv2.cvtColor(uint8, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(uint8, cv2.COLOR_RGB2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-        # cv2.putText(frame, info, (5, 15), font, 0.5, (255, 0, 255), 1)
 
+        # --------------------추가된 부분--------------------
+        # 얼굴 회전할 각도 설정하는 array, 테스트 결과 +-15도까지는 haar cascade filter가 동작함
+        # 각각의 각도만큼 회전된 이미지를 바탕으로 얼굴 위치 검출, faces array에 추가
+        
+        # rotationAngleArray = [-30, 0, 30]
+        # faces = []
+        # (height, width) = gray.shape[:2]
+        # imageCenter = (width / 2, height / 2)
+
+        # for angle in rotationAngleArray:
+        #     rotMatrix = cv2.getRotationMatrix2D(imageCenter, angle, 1)
+        #     Cos = rotMatrix[0, 0]
+        #     Sin = rotMatrix[0, 1]
+        #     rotatedWidth = int(height * abs(Sin) + width * abs(Cos))
+        #     rotatedHeight = int(height * abs(Cos) + width * abs(Sin))
+        #     rotMatrix[0, 2] += rotatedWidth / 2 - imageCenter[0]
+        #     rotMatrix[1, 2] += rotatedHeight / 2 - imageCenter[1]
+        #     targetFrame = cv2.warpAffine(gray, rotMatrix, (rotatedWidth, rotatedHeight))
+
+        #     faceLocations = face_cascade.detectMultiScale(gray, 1.3, 5)
+            
+        #     if faceLocations != ():
+        #         for location in faceLocations:
+        #             (x, y, w, h) = location
+        #             midx = x + w/2
+        #             midy = y + h/2
+        #             x = int(Cos * (midx - rotatedWidth/2) - Sin * (midy - rotatedHeight/2) + width/2 - w/2)
+        #             y = int(Sin * (midx - rotatedWidth/2) + Cos * (midy - rotatedHeight/2) + height/2 - h/2)
+        #             print("face found in angle", angle)
+        #             location[0] = x
+        #             location[1] = y
+
+        #             faces.append(location)
+                    
+        # -----------------------------------------------
         # 두명 이상이면 얼굴 큰 사람
         if len(faces)>1:
             face_list = []
@@ -56,8 +90,9 @@ def face_tracking(frame, face_location, is_running, is_detected, ):
 
             x_pos = x + w/2
             y_pos = y + h/2 
-            #### 여기 아래에다 모터 제어 파트 쓰면 될 듯 ####
 
+            #### 여기 아래에다 모터 제어 파트 쓰면 될 듯 ####
+            print("detected")
 
             ##############################################
     
@@ -75,8 +110,8 @@ def face_tracking(frame, face_location, is_running, is_detected, ):
 # 얼굴 인식과 표정 인식을 멀티프로세싱을 돌려 빠르게 처리하도록
 # 인식하고, 인식 횟수가 몇회 이상이면 
 def recognition(frame, face_location_, emotion, is_detected, ):
-    model = model()
-    model.load_weights('model/model.h5')
+    # model = model()
+    # model.load_weights('model/model.h5')
     # 아는 
     while True:
         if is_detected.value == 1:
@@ -111,6 +146,7 @@ def face_reco(rgb, face_location, ):
     else:
         name = "unknown"
     
+    print(name)
     return name
 
 def face_emo(rgb, face_location, model,):
