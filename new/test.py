@@ -29,8 +29,9 @@ def view(frame, is_running, ):
 
 ######################################################################
 
-# face_tracking 함수는 얼굴 위치를 계산해서 내보내고, 모터 제어
-def face_tracking(frame, face_location, is_running, is_detected, ):
+# face_tracking 함수는 얼굴 위치를 계산해서 내보냄(2명 이상이면 한명만 골라서)
+# 입력: frame, is_running  출력: face_location, is_detected
+def face_location(frame, face_location, is_running, is_detected, ):
     face_cascade = cv2.CascadeClassifier('haar/haarcascade_frontalface_alt2.xml')
     while True:
         uint8 = frame.array.astype(np.uint8)
@@ -88,14 +89,6 @@ def face_tracking(frame, face_location, is_running, is_detected, ):
             (top, right, bottom, left) = (y, x+w, y+h, x)
             # cv2.rectangle(frame, (left, top), (right, bottom), (0,0,255), 2)
 
-            x_pos = x + w/2
-            y_pos = y + h/2 
-
-            #### 여기 아래에다 모터 제어 파트 쓰면 될 듯 ####
-            print("detected")
-
-            ##############################################
-    
         # No face detected
         else:
             if is_detected.value == 1:
@@ -103,6 +96,13 @@ def face_tracking(frame, face_location, is_running, is_detected, ):
             else:
                 pass
         # print(is_detected.value)
+
+def face_tracking(face_location, ):
+    np.array([[y, x+w, y+h, x]]) = face_location.array
+    x_pos = x + w/2
+    y_pos = y + h/2 
+    # 모터 제어 파트 추가 
+
 
 ######################################################################################
 
@@ -121,9 +121,9 @@ def recognition(frame, face_location_, emotion, is_detected, ):
             # 함수 안에서 다른 함수를 호출할 수는 있지만, 멀티프로세싱으로 돌리지는 못하나? 되는데... 일단 다른것부터
             face_reco.start()
             face_reco.join()
-            # face_emo = Process(target=face_emo, args=(rgb, face_location, model, ))
-            # face_emo.start()
-            # face_emo.join()
+            face_emo = Process(target=face_emo, args=(rgb, face_location, model, ))
+            face_emo.start()
+            face_emo.join()
         else:
             time.sleep(0.03)
             pass
@@ -153,8 +153,6 @@ def face_reco(rgb, face_location, ):
 def face_emo(rgb, face_location, model,):
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     
-    # model = load_model("models/20200622_2242_model.h5")
-    # emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
     for (top, right, bottom, left) in face_location:
         roi_gray = gray_for_emotion[top:bottom, left:right]
         cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
@@ -163,7 +161,7 @@ def face_emo(rgb, face_location, model,):
         
         if len(prediction) != 0:
             prediction = prediction[0]
-            prediction = np.rint(prediction/sum(prediction)*100)# %
+            prediction = np.rint(prediction/sum(prediction)*100) # %
             return prediction
 
 ##################################################################################
@@ -171,10 +169,18 @@ def face_emo(rgb, face_location, model,):
 # 클래스를 활용해야 하나? 
 
 def expression():
-    display = Process(target=display).start()
-    left_arm = Process(target=left_arm).start()
-    right_arm = Process(target=right_arm).start()
-    doridori = Process(target=doridori).start()
+    display = Process(target=display)
+    display.start()
+    display.join()
+    left_arm = Process(target=left_arm)
+    left_arm.start()
+    left_arm.join()
+    right_arm = Process(target=right_arm)
+    right_arm.start()
+    right_arm.join()
+    doridori = Process(target=doridori)
+    doridori.start()
+    doridori.join()
     pass
 def display(): pass
 def left_arm(): pass
@@ -220,6 +226,7 @@ def img2encoding():
         if name in face_list.keys():
             pass
         else:
+            # 이 부분이 느린 부분이라 if 문에 넣기
             name_image = face_recognition.load_image_file(f"face/img/{image}")
             name_encoding = face_recognition.face_encodings(name_image)[0]
             face_list[name] = name_encoding.tolist()
