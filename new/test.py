@@ -95,6 +95,7 @@ def face_location(frame, face_location, is_running, is_detected, ):
                 is_detected.value = 0
             else:
                 pass
+        print(face_locations)
         # print(is_detected.value)
 
 def face_tracking(face_location, ):
