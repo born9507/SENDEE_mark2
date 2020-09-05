@@ -7,6 +7,7 @@ import cv2
 import json
 import asyncio
 import face_recognition
+import model.model as md
 
 # from model.model import model
 #recognition
@@ -26,11 +27,10 @@ def view(frame, HEIGHT, WIDTH, face_location, is_running, ):
     # font = cv2.FONT_HERSHEY_SIMPLEX
 
     while True:
-        start = time.time()
         if is_running.value==1:
             ret, frame_ = capture.read()
             if not ret: break
-
+            #frame_ 의 해상도를 낮춰서 haar 에 넣어볼까?
             gray = cv2.cvtColor(frame_, cv2.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(gray, 1.3, 5)
             # cv2.putText(frame_, info, (5, 15), font, 0.5, (255, 0, 255), 1)
@@ -49,7 +49,6 @@ def view(frame, HEIGHT, WIDTH, face_location, is_running, ):
                 [x, y, w, h] = faces[0]
                 face_locations = np.array([[y, x+w, y+h, x]])
                 face_location.array[:] = face_locations[:] # export
-                print("detected!")
                 # (top, right, bottom, left) = (y, x+w, y+h, x)
                 # cv2.rectangle(frame_, (left, top), (right, bottom), (0,0,255), 2)
             # No face detected
@@ -64,8 +63,6 @@ def view(frame, HEIGHT, WIDTH, face_location, is_running, ):
         else:
             time.sleep(1)
             pass
-        print("view time: ", time.time()-start)
-
     capture.release() 
     cv2.destroyAllWindows()
 
@@ -79,6 +76,8 @@ def face_tracking(face_location, is_running, ):
             h = bottom - top
         x_pos = x + w/2
         y_pos = y + h/2 
+        # print("x: ", x_pos,"y:", y_pos)
+        time.sleep(0.1)
     # 모터 제어 파트 추가 
 
 
@@ -88,65 +87,75 @@ def face_tracking(face_location, is_running, ):
 # 얼굴 인식은 is_detected 일때만 돌아가도록 하자
 # 얼굴 인식과 표정 인식을 멀티프로세싱을 돌려 빠르게 처리하도록
 # 인식하고, 인식 횟수가 몇회 이상이면 
-def recognition(frame, face_location_, emotion, is_detected, ):
+def recognition(frame, face_location_, name_index, emotion_index, is_detected, ):
+    model = md.model()
+    model.load_weights('model/model.h5')
     # 아는 
     while True:
         if is_detected.value == 1:
+            start = time.time()
+
             rgb = frame.array.astype(np.uint8)
-            face_location = face_location_.array.astype(np.uint8)
+            bgr = rgb[:,:,::-1]
+            # cv2.imwrite("rgb.jpg", rgb)
+            # cv2.imwrite("bgr.jpg", bgr)
+            face_location = face_location_.array.astype(np.int16)
             
             loop = asyncio.get_event_loop()
             loop.run_until_complete(asyncio.gather(
-                face_reco(rgb, face_location),
-                # face_emo(),
+                face_reco(rgb, face_location, name_index, ),
+                face_emo(rgb, face_location, model, emotion_index, ),
             ))
-
+            
+            print("recognition time: ",time.time()-start)
+            print("")
         else:
             time.sleep(0.03)
             pass
 
-
-async def face_reco(rgb, face_location, ):
+async def face_reco(rgb, face_location, name_index, ):
     start = time.time()
     with open("face/face_list.json", "r") as f:
         face_list = json.load(f)
     
     known_face_names = list(face_list.keys()) # list
     known_face_encodings = np.array(list(face_list.values())) # numpy.ndarray
-    # print(known_face_names)
-    # print(known_face_encodings)
     
     ##불러온 파일 이용해서 인코딩 구한다
     face_encoding = face_recognition.face_encodings(rgb, face_location)
-    # print("face_encoding: ",face_encoding[0])
     matches = face_recognition.compare_faces(known_face_encodings, face_encoding[0])
     face_distances = face_recognition.face_distance(known_face_encodings, face_encoding[0])
-    # print("face_distances: ", face_distances)
-    # print("matches: ", matches)
+
+    # for i in range(len(known_face_names)):
+    #     print(f"{known_face_names[i]} : {round((1 - face_distances[i]) / (4 - sum(face_distances)) * 100)}%", end=" ")
+    # print("")
+
     best_match_index = np.argmin(face_distances)
 
     if matches[best_match_index]:
         name = known_face_names[best_match_index]
+        name_index.value = best_match_index
     else:
         name = "unknown"
-    
+        name_index.value = -1
     # print(name)
-    # print("face_reco time: ",time.time() - start)
-    # print(" ")
-
-# async def face_emo(rgb, face_location, model,):
-#     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    print("face-rec time: ", time.time()-start)
     
-#     for (top, right, bottom, left) in face_location:
-#         roi_gray = gray_for_emotion[top:bottom, left:right]
-#         cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
-#         prediction = model.predict(cropped_img)
-#         # cv2.imwrite('cropped.png', roi_gray)
+async def face_emo(rgb, face_location, model, emotion_index, ):
+    start = time.time()
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    
+    for (top, right, bottom, left) in face_location:
+        roi_gray = gray[top:bottom, left:right]
+        cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
+        prediction = model.predict(cropped_img)
+        cv2.imwrite('cropped.png', roi_gray)
         
-#         if len(prediction) != 0:
-#             prediction = prediction[0]
-#             prediction = np.rint(prediction/sum(prediction)*100) # %
-#             print(prediction)
+        if len(prediction) != 0:
+            prediction = prediction[0]
+            prediction = np.rint(prediction/sum(prediction)*100) # %
+            # print(prediction)
+    print("emo time: ", time.time()-start)
 
 ##################################################################################
 
@@ -210,6 +219,11 @@ def delete_img():
 
 if __name__ == "__main__":
     try:
+        with open("face/face_list.json", "r") as f:
+            face_list = json.load(f)
+        known_face_names = list(face_list.keys()) # list
+        known_face_names.append("unknown") # 리스트 맨 마지막에 unknown 추가, known_face_names[-1] 로 접근
+
         # model = model()
         # model.load_weights('model/model.h5')
 
@@ -226,19 +240,20 @@ if __name__ == "__main__":
         face_tracking_running = Value('i', 1)
         recognition_running = Value('i', 1)
         is_detected = Value('i', 0)
-        emotion = Value('i', 4)
+        emotion_index = Value('i', 4)
+        name_index = Value('i', -1) # -1 이 unknown
 
         view = Process(target=view, args=(frame, HEIGHT, WIDTH, face_location ,view_running, ))
         face_tracking = Process(target=face_tracking, args=(face_location, face_tracking_running, ))
-        recognition = Process(target=recognition, args=(frame, face_location, emotion, is_detected, ))
+        recognition = Process(target=recognition, args=(frame, face_location, name_index, emotion_index, is_detected, ))
 
         view.start()
         face_tracking.start()
-        # face_tracking_move.start()
         recognition.start()
 
         while True:
             # is_running 제어하기
+            # print(known_face_names[name_index.value])
             pass
         
     finally:
