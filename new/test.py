@@ -16,7 +16,7 @@ import model.model as md
 # view 함수는 카메라로 촬영한 것을 frame 변수에 저장(np.array, dtype=float64)
 # 얼굴 위치도 계산해서 내보냄(2명 이상이면 한명만 골라서)
 
-def view(frame, HEIGHT, WIDTH, face_location, is_running, ):
+def view(frame, HEIGHT, WIDTH, face_location, is_running, is_detected, ):
 
     capture = cv2.VideoCapture(-1)
     capture.set(3, WIDTH.value)
@@ -80,14 +80,12 @@ def face_tracking(face_location, is_running, ):
         time.sleep(0.1)
     # 모터 제어 파트 추가 
 
-
 ######################################################################################
-
 
 # 얼굴 인식은 is_detected 일때만 돌아가도록 하자
 # 얼굴 인식과 표정 인식을 멀티프로세싱을 돌려 빠르게 처리하도록
 # 인식하고, 인식 횟수가 몇회 이상이면 
-def recognition(frame, face_location_, name_index, emotion_index, is_detected, ):
+async def recognition(frame, face_location_, name_index, emotion, is_detected, ):
     model = md.model()
     model.load_weights('model/model.h5')
     # 아는 
@@ -100,12 +98,14 @@ def recognition(frame, face_location_, name_index, emotion_index, is_detected, )
             # cv2.imwrite("rgb.jpg", rgb)
             # cv2.imwrite("bgr.jpg", bgr)
             face_location = face_location_.array.astype(np.int16)
-            
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(asyncio.gather(
-                face_reco(rgb, face_location, name_index, ),
-                face_emo(rgb, face_location, model, emotion_index, ),
-            ))
+
+            face_reco()
+            face_emo()
+
+            loop = asyncio.get_running_loop()
+            face_reco_ = await loop.run_in_executor(None, face_reco, (rgb, face_location, name_index, ))
+            face_emo_ = await loop.run_in_executor(None, face_emo, (rgb, face_location, model, emotion, ))   
+            # 여기 왜 비동기 처리가 안되는가
             
             print("recognition time: ",time.time()-start)
             print("")
@@ -115,6 +115,7 @@ def recognition(frame, face_location_, name_index, emotion_index, is_detected, )
 
 async def face_reco(rgb, face_location, name_index, ):
     start = time.time()
+    loop = asyncio.get_event_loop()
     with open("face/face_list.json", "r") as f:
         face_list = json.load(f)
     
@@ -141,8 +142,9 @@ async def face_reco(rgb, face_location, name_index, ):
     # print(name)
     print("face-rec time: ", time.time()-start)
     
-async def face_emo(rgb, face_location, model, emotion_index, ):
+async def face_emo(rgb, face_location, model, emotion, ):
     start = time.time()
+    loop = asyncio.get_event_loop()
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     
     for (top, right, bottom, left) in face_location:
@@ -153,8 +155,8 @@ async def face_emo(rgb, face_location, model, emotion_index, ):
         
         if len(prediction) != 0:
             prediction = prediction[0]
-            prediction = np.rint(prediction/sum(prediction)*100) # %
-            # print(prediction)
+            # prediction = np.rint(prediction/sum(prediction)*100) # %
+            emotion.array[:] = prediction[:]
     print("emo time: ", time.time()-start)
 
 ##################################################################################
@@ -233,6 +235,7 @@ if __name__ == "__main__":
         save_img()
         frame = SharedNDArray((HEIGHT.value, WIDTH.value, 3))
         face_location = SharedNDArray((1,4))
+        emotion = SharedNDArray((1,7))
         # print(face_location.array)
         emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
 
@@ -240,12 +243,11 @@ if __name__ == "__main__":
         face_tracking_running = Value('i', 1)
         recognition_running = Value('i', 1)
         is_detected = Value('i', 0)
-        emotion_index = Value('i', 4)
         name_index = Value('i', -1) # -1 이 unknown
 
-        view = Process(target=view, args=(frame, HEIGHT, WIDTH, face_location ,view_running, ))
+        view = Process(target=view, args=(frame, HEIGHT, WIDTH, face_location ,view_running, is_detected, ))
         face_tracking = Process(target=face_tracking, args=(face_location, face_tracking_running, ))
-        recognition = Process(target=recognition, args=(frame, face_location, name_index, emotion_index, is_detected, ))
+        recognition = Process(target=recognition, args=(frame, face_location, name_index, emotion, is_detected, ))
 
         view.start()
         face_tracking.start()
@@ -254,6 +256,11 @@ if __name__ == "__main__":
         while True:
             # is_running 제어하기
             # print(known_face_names[name_index.value])
+            # print(is_detected.value)
+            # print(emotion.array)
+            # print(np.argmax(emotion.array))
+            # print(emotion_dict[np.argmax(emotion.array)])
+            time.sleep(1)
             pass
         
     finally:
