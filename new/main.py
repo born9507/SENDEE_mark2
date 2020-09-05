@@ -9,10 +9,6 @@ import asyncio
 import face_recognition
 import model.model as md
 
-# from model.model import model
-#recognition
-# from keras.models import load_model
-
 # view 함수는 카메라로 촬영한 것을 frame 변수에 저장(np.array, dtype=float64)
 # 얼굴 위치도 계산해서 내보냄(2명 이상이면 한명만 골라서)
 
