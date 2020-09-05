@@ -85,7 +85,7 @@ def face_tracking(face_location, is_running, ):
 # 얼굴 인식은 is_detected 일때만 돌아가도록 하자
 # 얼굴 인식과 표정 인식을 멀티프로세싱을 돌려 빠르게 처리하도록
 # 인식하고, 인식 횟수가 몇회 이상이면 
-async def recognition(frame, face_location_, name_index, emotion, is_detected, ):
+def recognition(frame, face_location_, name_index, emotion, is_detected, ):
     model = md.model()
     model.load_weights('model/model.h5')
     # 아는 
@@ -101,10 +101,6 @@ async def recognition(frame, face_location_, name_index, emotion, is_detected, )
 
             face_reco()
             face_emo()
-
-            loop = asyncio.get_running_loop()
-            face_reco_ = await loop.run_in_executor(None, face_reco, (rgb, face_location, name_index, ))
-            face_emo_ = await loop.run_in_executor(None, face_emo, (rgb, face_location, model, emotion, ))   
             # 여기 왜 비동기 처리가 안되는가
             
             print("recognition time: ",time.time()-start)
@@ -113,9 +109,8 @@ async def recognition(frame, face_location_, name_index, emotion, is_detected, )
             time.sleep(0.03)
             pass
 
-async def face_reco(rgb, face_location, name_index, ):
+def face_reco(rgb, face_location, name_index, ):
     start = time.time()
-    loop = asyncio.get_event_loop()
     with open("face/face_list.json", "r") as f:
         face_list = json.load(f)
     
@@ -142,9 +137,8 @@ async def face_reco(rgb, face_location, name_index, ):
     # print(name)
     print("face-rec time: ", time.time()-start)
     
-async def face_emo(rgb, face_location, model, emotion, ):
+def face_emo(rgb, face_location, model, emotion, ):
     start = time.time()
-    loop = asyncio.get_event_loop()
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     
     for (top, right, bottom, left) in face_location:
