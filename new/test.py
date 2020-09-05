@@ -146,7 +146,6 @@ def face_emo(rgb, face_location, model, emotion, ):
         roi_gray = gray[top:bottom, left:right]
         cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
         prediction = model.predict(cropped_img)
-        cv2.imwrite('cropped.png', roi_gray)
         
         if len(prediction) != 0:
             prediction = prediction[0]
