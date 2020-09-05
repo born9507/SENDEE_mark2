@@ -63,6 +63,8 @@ def face_reco():
     with open("pkl/known_face_encodings.pkl", "rb") as file:
         known_face_encodings = pickle.load(file)
         file.close()
+
+    
     
     ##불러온 파일 이용해서 인코딩 구한다
     face_encoding = face_recognition.face_encodings(rgb_for_face, face_location)
