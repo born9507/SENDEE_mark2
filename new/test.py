@@ -67,7 +67,7 @@ def view(frame, HEIGHT, WIDTH, face_location, is_running, is_detected, ):
 
 
 # 프로세스 2
-def face_tracking(face_location, is_running,):
+def face_tracking(face_location, is_running, pi, ):
     # 모터 제어 전역변수
     pi = pigpio.pi()
     lm = 5
@@ -112,13 +112,13 @@ def face_tracking(face_location, is_running,):
             
         hor_error_Sum = hor_error_Sum + x_pos
         ver_error_Sum = ver_error_Sum + y_pos
-        past_ver_dc = headServo(y_pos, 0.05, past_ver_dc, ver_error_Sum, ver_error_Prev, head_mindc, head_maxdc, head_interval)
-        past_hor_dc = bodyServo(x_pos, 0.05, past_hor_dc, hor_error_Sum, hor_error_Prev, body_mindc, body_maxdc, body_interval)
+        past_ver_dc = headServo(y_pos, 0.05, past_ver_dc, ver_error_Sum, ver_error_Prev, head_mindc, head_maxdc, head_interval, pi,)
+        past_hor_dc = bodyServo(x_pos, 0.05, past_hor_dc, hor_error_Sum, hor_error_Prev, body_mindc, body_maxdc, body_interval, pi,)
         hor_error_Prev = x_pos
         ver_error_Prev = y_pos
     
 
-def headServo(error_Now, time, past_dc, error_Sum, error_Prev, head_mindc, head_maxdc, head_interval):
+def headServo(error_Now, time, past_dc, error_Sum, error_Prev, head_mindc, head_maxdc, head_interval, pi,):
     Kp = 50
     Ki = 0
     Kd = 0
@@ -153,7 +153,7 @@ def headServo(error_Now, time, past_dc, error_Sum, error_Prev, head_mindc, head_
 
     return head_duty
 
-def bodyServo(error_Now, time, past_dc, error_Sum, error_Prev, body_mindc, body_maxdc, body_interval):    
+def bodyServo(error_Now, time, past_dc, error_Sum, error_Prev, body_mindc, body_maxdc, body_interval, pi, ):    
     Kp = 50
     Ki = 0
     Kd = 0
@@ -248,7 +248,6 @@ def face_reco(rgb, face_location, name_index, ):
     # print("face-rec time: ", time.time()-start)
     
 def face_emo(rgb, face_location, model, emotion, ):
-    start = time.time()
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
     
     for (top, right, bottom, left) in face_location:
@@ -258,9 +257,7 @@ def face_emo(rgb, face_location, model, emotion, ):
         
         if len(prediction) != 0:
             prediction = prediction[0]
-            # prediction = np.rint(prediction/sum(prediction)*100) # %
             emotion.array[:] = prediction[:]
-    # print("emo time: ", time.time()-start)
 
 ##################################################################################
 
@@ -322,9 +319,34 @@ def delete_img():
 
 ####################################################################################
 
+def save_emotion(is_detected, emotion):
+    now = time.gmtime(time.time())
+    # 1분 동안의 정보를 다 합산하여 1분에 한번씩 저장 - 나중에 구현 
+    # 우선은 몇초동안 각각의 감정이 나타났는지만 저장, emotion_total 변수 구현
+    # emotion_total 은 서버로 전송 후 초기화
+    # 서버에서는 받아서 합산하도록
+    
+    while True:
+        if time.gmtime(time.time()).tm_sec != now.tm_sec:
+            if is_detected.value = 1:
+                year = now.tm_year
+                month = now.tm_mon 
+                day = now.tm_mday
+                hour = now.tm_hour
+                minute = now.tm_min
+                sec = now.tm_sec
+                wday = now.tm_wday
+                emotion.array 
+
+            now = time.gmtime(time.time())
+
+    print(time.time() - start)
+
 if __name__ == "__main__":
     try:
+        pi = pigpio.pi()
         img2encoding()
+
         with open("face/face_list.json", "r") as f:
             face_list = json.load(f)
         known_face_names = list(face_list.keys()) # list
@@ -349,7 +371,7 @@ if __name__ == "__main__":
         name_index = Value('i', -1) # -1 이 unknown
 
         view = Process(target=view, args=(frame, HEIGHT, WIDTH, face_location ,view_running, is_detected, ))
-        face_tracking = Process(target=face_tracking, args=(face_location, face_tracking_running, ))
+        face_tracking = Process(target=face_tracking, args=(face_location, face_tracking_running, pi, ))
         recognition = Process(target=recognition, args=(frame, face_location, name_index, emotion, is_detected, ))
 
         view.start()
@@ -361,8 +383,8 @@ if __name__ == "__main__":
             # print(is_detected.value)
             # print(emotion.array)
             # print(np.argmax(emotion.array))
-            print(known_face_names[name_index.value])
-            print(emotion_dict[np.argmax(emotion.array)])
+            # print(known_face_names[name_index.value])
+            # print(emotion_dict[np.argmax(emotion.array)])
             time.sleep(0.5)
             pass
         
