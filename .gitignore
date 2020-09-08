@@ -1,7 +1,6 @@
 *.pkl
 __pycache__
 *.pyc
-*.json
 .vscode
 
 cropped.png
