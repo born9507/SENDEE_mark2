@@ -342,6 +342,8 @@ def save_emotion(is_detected, emotion):
 
     print(time.time() - start)
 
+#############################################################
+
 if __name__ == "__main__":
     try:
         pi = pigpio.pi()
