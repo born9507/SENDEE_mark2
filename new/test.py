@@ -11,13 +11,10 @@ import model.model as md
 import os
 import pigpio
 
-# from model.model import model
-#recognition
-# from keras.models import load_model
-
 # view 함수는 카메라로 촬영한 것을 frame 변수에 저장(np.array, dtype=float64)
 # 얼굴 위치도 계산해서 내보냄(2명 이상이면 한명만 골라서)
 
+# 프로세스 1
 def view(frame, HEIGHT, WIDTH, face_location, is_running, is_detected, ):
 
     capture = cv2.VideoCapture(-1)
@@ -68,38 +65,38 @@ def view(frame, HEIGHT, WIDTH, face_location, is_running, is_detected, ):
     capture.release() 
     cv2.destroyAllWindows()
 
-# 모터 제어 전역변수
-pi = pigpio.pi()
-lm = 5
-rm = 13
-bm = 6
-hm = 19
 
-head_mindc = 1650
-head_maxdc = 2150
-head_interval = (head_maxdc - head_mindc)/40
-
-body_mindc = 600
-body_maxdc = 2400
-body_interval = (body_maxdc - body_mindc)/40
-
-right_mindc = 500
-right_maxdc = 1300
-right_interval = (right_maxdc - right_mindc)/40
-
-left_mindc = 1250
-left_maxdc = 2000
-left_interval = (left_maxdc - left_mindc)/40
-
-hor_error_Sum = 0
-hor_error_Prev = 0
-ver_error_Sum = 0
-ver_error_Prev = 0
-past_hor_dc = 1500
-past_ver_dc = 2000
-
+# 프로세스 2
 def face_tracking(face_location, is_running,):
-    
+    # 모터 제어 전역변수
+    pi = pigpio.pi()
+    lm = 5
+    rm = 13
+    bm = 6
+    hm = 19
+
+    head_mindc = 1650
+    head_maxdc = 2150
+    head_interval = (head_maxdc - head_mindc)/40
+
+    body_mindc = 600
+    body_maxdc = 2400
+    body_interval = (body_maxdc - body_mindc)/40
+
+    right_mindc = 500
+    right_maxdc = 1300
+    right_interval = (right_maxdc - right_mindc)/40
+
+    left_mindc = 1250
+    left_maxdc = 2000
+    left_interval = (left_maxdc - left_mindc)/40
+
+    hor_error_Sum = 0
+    hor_error_Prev = 0
+    ver_error_Sum = 0
+    ver_error_Prev = 0
+    past_hor_dc = 1500
+    past_ver_dc = 2000
     # 모터 제어 파트 추가
     while True:
         for (top, right, bottom, left) in face_location.array:
@@ -113,21 +110,15 @@ def face_tracking(face_location, is_running,):
             
             # time.sleep(0.1)
             
-            hor_error_Sum = hor_error_Sum + x_pos
-            ver_error_Sum = ver_error_Sum + y_pos
-            past_ver_dc = headServo(y_pos, 0.05, past_ver_dc, ver_error_Sum, ver_error_Prev)
-            past_hor_dc = bodyServo(x_pos, 0.05, past_hor_dc, hor_error_Sum, hor_error_Prev)
-            hor_error_Prev = x_pos
-            ver_error_Prev = y_pos
+        hor_error_Sum = hor_error_Sum + x_pos
+        ver_error_Sum = ver_error_Sum + y_pos
+        past_ver_dc = headServo(y_pos, 0.05, past_ver_dc, ver_error_Sum, ver_error_Prev, head_mindc, head_maxdc, head_interval)
+        past_hor_dc = bodyServo(x_pos, 0.05, past_hor_dc, hor_error_Sum, hor_error_Prev, body_mindc, body_maxdc, body_interval)
+        hor_error_Prev = x_pos
+        ver_error_Prev = y_pos
     
-    
-######################################################################################
 
-def headServo(error_Now, time, past_dc, error_Sum, error_Prev):
-    global head_mindc
-    global head_maxdc 
-    global head_interval
-    
+def headServo(error_Now, time, past_dc, error_Sum, error_Prev, head_mindc, head_maxdc, head_interval):
     Kp = 50
     Ki = 0
     Kd = 0
@@ -162,11 +153,7 @@ def headServo(error_Now, time, past_dc, error_Sum, error_Prev):
 
     return head_duty
 
-def bodyServo(error_Now, time, past_dc, error_Sum, error_Prev):
-    global body_mindc
-    global body_maxdc 
-    global body_interval
-    
+def bodyServo(error_Now, time, past_dc, error_Sum, error_Prev, body_mindc, body_maxdc, body_interval):    
     Kp = 50
     Ki = 0
     Kd = 0
@@ -201,10 +188,13 @@ def bodyServo(error_Now, time, past_dc, error_Sum, error_Prev):
 
     return body_duty
 
+######################################################################################
 
 # 얼굴 인식은 is_detected 일때만 돌아가도록 하자
 # 얼굴 인식과 표정 인식을 멀티프로세싱을 돌려 빠르게 처리하도록
 # 인식하고, 인식 횟수가 몇회 이상이면 
+
+# 프로세스 3
 def recognition(frame, face_location_, name_index, emotion, is_detected, ):
     model = md.model()
     model.load_weights('model/model.h5')
