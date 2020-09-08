@@ -61,9 +61,9 @@ def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, h
     
     ctrlval = -(Kp*error + Ki*error_sum*waittime + Kd*error_diff)
     
-    # if abs(ctrlval) < 2:
-    #     ctrlval = 0
-    # ctrlval = round(ctrlval, 1)
+    if abs(ctrlval) < 0.008:
+        ctrlval = 0
+    ctrlval = round(ctrlval, 1)
            
     head_duty = past_dc - head_interval * ctrlval
     
@@ -98,9 +98,9 @@ def bodyServo(error_Now, waittime, past_dc, error_Sum, error_Prev, body_mindc, b
     
     ctrlval = -(Kp*error + Ki*error_sum*waittime + Kd*error_diff)
     
-    # if abs(ctrlval) < 0.02:
-    #     ctrlval = 0
-    # ctrlval = round(ctrlval, 1)
+    if abs(ctrlval) < 0.008:
+        ctrlval = 0
+    ctrlval = round(ctrlval, 1)
            
     body_duty = past_dc - body_interval * ctrlval
     
