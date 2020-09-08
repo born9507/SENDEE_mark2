@@ -30,6 +30,9 @@ def view(frame, HEIGHT, WIDTH, face_location, is_running, is_detected, ):
             ret, frame_ = capture.read()
             if not ret: break
             #frame_ 의 해상도를 낮춰서 haar 에 넣어볼까?
+
+            # flip 추가!!!!!!!!!!
+
             gray = cv2.cvtColor(frame_, cv2.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(gray, 1.3, 5)
             # cv2.putText(frame_, info, (5, 15), font, 0.5, (255, 0, 255), 1)
@@ -319,7 +322,7 @@ def delete_img():
 
 ####################################################################################
 
-def save_emotion(is_detected, emotion):
+def save_emotion(is_detected, emotion, emotion_total, ):
     now = time.gmtime(time.time())
     # 1분 동안의 정보를 다 합산하여 1분에 한번씩 저장 - 나중에 구현 
     # 우선은 몇초동안 각각의 감정이 나타났는지만 저장, emotion_total 변수 구현
@@ -327,18 +330,18 @@ def save_emotion(is_detected, emotion):
     # 서버에서는 받아서 합산하도록
     
     while True:
-        if time.gmtime(time.time()).tm_sec != now.tm_sec:
+        if time.gmtime(time.time()).tm_sec != now.tm_sec: # 1 sec
             if is_detected.value = 1:
-                year = now.tm_year
-                month = now.tm_mon 
-                day = now.tm_mday
-                hour = now.tm_hour
-                minute = now.tm_min
-                sec = now.tm_sec
-                wday = now.tm_wday
-                emotion.array 
+                # year = now.tm_year
+                # month = now.tm_mon 
+                # day = now.tm_mday
+                # hour = now.tm_hour
+                # minute = now.tm_min
+                # sec = now.tm_sec
+                # wday = now.tm_wday
+                emotion_total.arry = emotion_total.array + emotion.array
 
-            now = time.gmtime(time.time())
+            now = time.gmtime(time.time()) 
 
     print(time.time() - start)
 
@@ -363,6 +366,7 @@ if __name__ == "__main__":
         frame = SharedNDArray((HEIGHT.value, WIDTH.value, 3))
         face_location = SharedNDArray((1,4))
         emotion = SharedNDArray((1,7))
+        emotion_total = SharedNDArray((1,7))
         # print(face_location.array)
         emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful", 3: "Happy", 4: "Neutral", 5: "Sad", 6: "Surprised"}
 
@@ -383,7 +387,7 @@ if __name__ == "__main__":
         while True:
             # is_running 제어하기
             # print(is_detected.value)
-            # print(emotion.array)
+            print(emotion.array)
             # print(np.argmax(emotion.array))
             # print(known_face_names[name_index.value])
             # print(emotion_dict[np.argmax(emotion.array)])
@@ -393,3 +397,5 @@ if __name__ == "__main__":
     finally:
         frame.unlink()
         face_location.unlink()
+        emotion.unlink()
+        emotion_total.unlink()
