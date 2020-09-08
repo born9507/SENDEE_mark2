@@ -122,7 +122,7 @@ def face_reco(rgb, face_location, name_index, ):
     face_encoding = face_recognition.face_encodings(rgb, face_location)
     matches = face_recognition.compare_faces(known_face_encodings, face_encoding[0])
     face_distances = face_recognition.face_distance(known_face_encodings, face_encoding[0])
-
+    
     # for i in range(len(known_face_names)):
     #     print(f"{known_face_names[i]} : {round((1 - face_distances[i]) / (4 - sum(face_distances)) * 100)}%", end=" ")
     # print("")
@@ -204,7 +204,7 @@ def img2encoding():
         json.dump(face_list, f, indent=2)
 
 # cv2 로 사진 캡쳐해서 찍기
-def save_img():
+def save_img(frame):
     pass
 
 # 해당 사진 지우기(웹 or 앱으로 처리)
