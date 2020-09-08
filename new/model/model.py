@@ -1,5 +1,6 @@
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Dropout, Flatten
+from keras.utils import plot_model
 
 def model():    
     model = Sequential()
@@ -21,3 +22,6 @@ def model():
     model.add(Dense(7, activation='softmax'))
 
     return model
+
+if __name__ == "__main__":
+    model()
