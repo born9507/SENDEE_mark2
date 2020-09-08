@@ -57,7 +57,7 @@ def save_emotion(is_detected, emotion, name_index,known_face_names, ):
             
         
         # 5분마다 전송 시도
-        if time.time() - webtime > 10: 
+        if time.time() - webtime > 5: 
             # 네트워크 연결 확인    
             if internet_on() == True:
                 print("Internet Connected")
@@ -66,7 +66,7 @@ def save_emotion(is_detected, emotion, name_index,known_face_names, ):
                 # csrftoken = client.cookies['csrftoken']
                 # login_data = dict(username=EMAIL, password=PASSWORD, csrfmiddlewaretoken=csrftoken, next='/')
 
-                # requests.post(URL, data=json.dumps(total_emotions))
+                requests.post(URL, data=json.dumps(time_total_emotions))
                 webtime = time.time()
             
             # 전송 실패시 5초 뒤에 다시 시도
