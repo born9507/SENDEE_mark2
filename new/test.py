@@ -227,7 +227,6 @@ if __name__ == "__main__":
         HEIGHT = Value('i', 320)
         WIDTH = Value('i', 480)
 
-        save_img()
         frame = SharedNDArray((HEIGHT.value, WIDTH.value, 3))
         face_location = SharedNDArray((1,4))
         emotion = SharedNDArray((1,7))
