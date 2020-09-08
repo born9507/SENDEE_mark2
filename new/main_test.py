@@ -27,10 +27,109 @@ def expression():
     doridori.join()
     pass
 def display(): pass
-def left_arm(): pass
-def right_arm(): pass
-def doridori(): pass
+def left_arm(): 
+    la = 13 
+    ra = 19  
 
+    right_mindc = 1800
+    right_maxdc = 950
+    right_interval = (right_maxdc - right_mindc)/40
+
+    left_mindc = 1000
+    left_maxdc = 1700
+    left_interval = (left_maxdc - left_mindc)/40
+
+    for j in range(0, 3):
+        for i in range(1, 41):
+            rduty = i * right_interval + right_mindc
+            lduty = i * left_interval + left_mindc
+            pi.set_servo_pulsewidth(la, lduty)
+            pi.set_servo_pulsewidth(ra, rduty)
+            time.sleep(0.01)
+
+        for i in range(41, 1, -1):
+            rduty = i * right_interval + right_mindc
+            lduty = i * left_interval + left_mindc
+            pi.set_servo_pulsewidth(la, lduty)
+            pi.set_servo_pulsewidth(ra, rduty)
+            time.sleep(0.01)
+
+    pi.set_servo_pulsewidth(la, 0)
+    pi.set_servo_pulsewidth(ra, 0)
+
+def right_arm(): 
+
+    la = 13 
+    ra = 19  
+
+    right_mindc = 1800
+    right_maxdc = 950
+    right_interval = (right_maxdc - right_mindc)/40
+
+    left_mindc = 1000
+    left_maxdc = 1700
+    left_interval = (left_maxdc - left_mindc)/40
+
+    for j in range(0, 3):
+        for i in range(1, 41):
+            rduty = i * right_interval + right_mindc
+            lduty = i * -left_interval + left_maxdc
+            pi.set_servo_pulsewidth(la, lduty)
+            pi.set_servo_pulsewidth(ra, rduty)
+            time.sleep(0.01)
+
+        for i in range(1, 41):
+            rduty = i * -right_interval + right_maxdc
+            lduty = i * left_interval + left_mindc
+            pi.set_servo_pulsewidth(la, lduty)
+            pi.set_servo_pulsewidth(ra, rduty)
+            time.sleep(0.01)
+
+    pi.set_servo_pulsewidth(la, 0)
+    pi.set_servo_pulsewidth(ra, 0)
+
+
+def doridori(): 
+    bm = 5
+
+    body_mindc = 600
+    body_maxdc = 2400
+    body_interval = (body_maxdc - body_mindc)/80
+
+    for j in range(0, 2):
+    for i in range(36, 56):
+        bduty = round(i * body_interval + body_mindc)
+        pi.set_servo_pulsewidth(bm, bduty)
+        time.sleep(0.1)
+    time.sleep(0.4)
+    for i in range(56, 36, -1):
+        bduty = round(i * body_interval + body_mindc)
+        pi.set_servo_pulsewidth(bm, bduty)
+        print(pi.get_servo_pulsewidth(bm))
+        time.sleep(0.1)
+    time.sleep(0.4)
+
+    pi.set_servo_pulsewidth(bm, 0)
+
+def nodnodnod():
+    hm = 6
+
+    head_mindc = 1200
+    head_maxdc = 1700
+    head_interval = (head_maxdc - head_mindc)/40
+
+    for j in range(0, 3):
+        for i in range(31, 41):
+            hduty = i * head_interval + head_mindc
+            pi.set_servo_pulsewidth(hm, hduty)
+            time.sleep(0.01)
+
+        for i in range(41, 31, -1):
+            hduty = i * head_interval + head_mindc
+            pi.set_servo_pulsewidth(hm, hduty)
+            time.sleep(0.01)
+
+    pi.set_servo_pulsewidth(hm, 0)
 
 # 언노운 일정 횟수 이상 들어오면 이 함수 실행하도록
 

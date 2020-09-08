@@ -2,8 +2,7 @@ import pigpio
 
 # 프로세스
 def face_tracking(face_location, is_running, pi, ):
-    lm = 19 #??
-    rm = 13 #??
+    
     bm = 5
     hm = 6
 
@@ -14,14 +13,6 @@ def face_tracking(face_location, is_running, pi, ):
     body_mindc = 600
     body_maxdc = 2400
     body_interval = (body_maxdc - body_mindc)/40
-
-    right_mindc = 500
-    right_maxdc = 1300
-    right_interval = (right_maxdc - right_mindc)/40
-
-    left_mindc = 1250
-    left_maxdc = 2000
-    left_interval = (left_maxdc - left_mindc)/40
 
     hor_error_Sum = 0
     hor_error_Prev = 0
@@ -65,7 +56,7 @@ def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, h
         ctrlval = 0
     ctrlval = round(ctrlval, 1)
            
-    head_duty = past_dc - head_interval * ctrlval
+    head_duty = round(past_dc - head_interval * ctrlval)
     
     if head_duty < head_mindc:
         head_duty = head_mindc
@@ -102,7 +93,7 @@ def bodyServo(error_Now, waittime, past_dc, error_Sum, error_Prev, body_mindc, b
         ctrlval = 0
     ctrlval = round(ctrlval, 1)
            
-    body_duty = past_dc - body_interval * ctrlval
+    body_duty = round(past_dc - body_interval * ctrlval)
     
     if body_duty < body_mindc:
         body_duty = body_mindc
