@@ -8,6 +8,11 @@ import json
 import asyncio
 import face_recognition
 import model.model as md
+import os
+
+# from model.model import model
+#recognition
+# from keras.models import load_model
 
 # view 함수는 카메라로 촬영한 것을 frame 변수에 저장(np.array, dtype=float64)
 # 얼굴 위치도 계산해서 내보냄(2명 이상이면 한명만 골라서)
@@ -95,12 +100,12 @@ def recognition(frame, face_location_, name_index, emotion, is_detected, ):
             # cv2.imwrite("bgr.jpg", bgr)
             face_location = face_location_.array.astype(np.int16)
 
-            face_reco()
-            face_emo()
+            face_reco(rgb, face_location, name_index, )
+            face_emo(rgb, face_location, model, emotion, )
             # 여기 왜 비동기 처리가 안되는가
             
-            print("recognition time: ",time.time()-start)
-            print("")
+            # print("recognition time: ",time.time()-start)
+            # print("")
         else:
             time.sleep(0.03)
             pass
@@ -131,7 +136,7 @@ def face_reco(rgb, face_location, name_index, ):
         name = "unknown"
         name_index.value = -1
     # print(name)
-    print("face-rec time: ", time.time()-start)
+    # print("face-rec time: ", time.time()-start)
     
 def face_emo(rgb, face_location, model, emotion, ):
     start = time.time()
@@ -141,13 +146,12 @@ def face_emo(rgb, face_location, model, emotion, ):
         roi_gray = gray[top:bottom, left:right]
         cropped_img = np.expand_dims(np.expand_dims(cv2.resize(roi_gray, (48, 48)), -1), 0)
         prediction = model.predict(cropped_img)
-        cv2.imwrite('cropped.png', roi_gray)
         
         if len(prediction) != 0:
             prediction = prediction[0]
             # prediction = np.rint(prediction/sum(prediction)*100) # %
             emotion.array[:] = prediction[:]
-    print("emo time: ", time.time()-start)
+    # print("emo time: ", time.time()-start)
 
 ##################################################################################
 
@@ -211,6 +215,7 @@ def delete_img():
 
 if __name__ == "__main__":
     try:
+        img2encoding()
         with open("face/face_list.json", "r") as f:
             face_list = json.load(f)
         known_face_names = list(face_list.keys()) # list
@@ -245,12 +250,12 @@ if __name__ == "__main__":
 
         while True:
             # is_running 제어하기
-            # print(known_face_names[name_index.value])
             # print(is_detected.value)
             # print(emotion.array)
             # print(np.argmax(emotion.array))
-            # print(emotion_dict[np.argmax(emotion.array)])
-            time.sleep(1)
+            print(known_face_names[name_index.value])
+            print(emotion_dict[np.argmax(emotion.array)], end="\n\n")
+            time.sleep(0.5)
             pass
         
     finally:
