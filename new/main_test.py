@@ -76,7 +76,7 @@ if __name__ == "__main__":
         view = Process(target=view.view, args=(frame, HEIGHT, WIDTH, face_location ,view_running, is_detected, ))
         face_tracking = Process(target=face_tracking.face_tracking, args=(face_location, face_tracking_running, pi, ))
         recognition = Process(target=recognition.recognition, args=(frame, face_location, name_index, emotion, is_detected, ))
-        save_emotion = Process(target=save_emotion.save_emotion, args=(is_detected, emotion, emotion_total, ))
+        save_emotion = Process(target=save_emotion.save_emotion, args=(is_detected, emotion, name_index, known_face_names,))
 
         view.start()
         face_tracking.start()
