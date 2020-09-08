@@ -1,4 +1,5 @@
 import pigpio
+import time
 
 # 프로세스
 def face_tracking(face_location, is_running, pi, ):
@@ -18,8 +19,8 @@ def face_tracking(face_location, is_running, pi, ):
     hor_error_Prev = 0
     ver_error_Sum = 0
     ver_error_Prev = 0
-    past_hor_dc = 1500
-    past_ver_dc = 1450
+    past_hor_dc = 1700
+    past_ver_dc = 1600
     # 모터 제어 파트 추가
     while True:
         for (top, right, bottom, left) in face_location.array:
@@ -29,10 +30,11 @@ def face_tracking(face_location, is_running, pi, ):
             h = bottom - top
             x_pos = (x + w/2 - 240)/240
             y_pos = (y + h/2 - 180)/180
-            # print("x: ", x_pos,"y:", y_pos)
+            #print("x: ", x_pos,"y:", y_pos)
             
             # time.sleep(0.1)
-            
+
+        
         hor_error_Sum = hor_error_Sum + x_pos
         ver_error_Sum = ver_error_Sum + y_pos
         past_ver_dc = headServo(y_pos, 0.01, past_ver_dc, ver_error_Sum, ver_error_Prev, head_mindc, head_maxdc, head_interval, pi, hm, )
@@ -42,7 +44,7 @@ def face_tracking(face_location, is_running, pi, ):
     
 
 def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, head_maxdc, head_interval, pi, hm, ):
-    Kp = 1
+    Kp = 0.5
     Ki = 0
     Kd = 0
     
@@ -64,8 +66,6 @@ def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, h
     elif head_duty > head_maxdc:
         head_duty = head_maxdc
     
-    print('ctrlval',ctrlval)
-    
     if head_duty == past_dc:
         print(head_duty, past_dc,'steady')
         head_duty = past_dc
@@ -78,10 +78,10 @@ def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, h
 
     return head_duty
 
-def bodyServo(error_Now, waittime, past_dc, error_Sum, error_Prev, body_mindc, body_maxdc, body_interval, pi, ):    
-    Kp = 0.5
+def bodyServo(error_Now, waittime, past_dc, error_Sum, error_Prev, body_mindc, body_maxdc, body_interval, pi, bm, ):    
+    Kp = 0.15
     Ki = 0
-    Kd = 0
+    Kd = 0.02
     
     error = error_Now
     error_sum = error_Sum + error
@@ -100,8 +100,6 @@ def bodyServo(error_Now, waittime, past_dc, error_Sum, error_Prev, body_mindc, b
         
     elif body_duty > body_maxdc:
         body_duty = body_maxdc
-
-    print('ctrlval',ctrlval)
     
     if body_duty == past_dc:
         print(body_duty, past_dc,'steady')

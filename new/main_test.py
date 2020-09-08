@@ -31,12 +31,12 @@ def left_arm():
     la = 13 
     ra = 19  
 
-    right_mindc = 1800
+    right_mindc = 1700
     right_maxdc = 950
     right_interval = (right_maxdc - right_mindc)/40
 
-    left_mindc = 1000
-    left_maxdc = 1700
+    left_mindc = 950
+    left_maxdc = 1900
     left_interval = (left_maxdc - left_mindc)/40
 
     for j in range(0, 3):
@@ -62,12 +62,12 @@ def right_arm():
     la = 13 
     ra = 19  
 
-    right_mindc = 1800
+    right_mindc = 1700
     right_maxdc = 950
     right_interval = (right_maxdc - right_mindc)/40
 
-    left_mindc = 1000
-    left_maxdc = 1700
+    left_mindc = 950
+    left_maxdc = 1900
     left_interval = (left_maxdc - left_mindc)/40
 
     for j in range(0, 3):
@@ -97,17 +97,18 @@ def doridori():
     body_interval = (body_maxdc - body_mindc)/80
 
     for j in range(0, 2):
-    for i in range(36, 56):
-        bduty = round(i * body_interval + body_mindc)
-        pi.set_servo_pulsewidth(bm, bduty)
-        time.sleep(0.1)
-    time.sleep(0.4)
-    for i in range(56, 36, -1):
-        bduty = round(i * body_interval + body_mindc)
-        pi.set_servo_pulsewidth(bm, bduty)
-        print(pi.get_servo_pulsewidth(bm))
-        time.sleep(0.1)
-    time.sleep(0.4)
+        # for i in range(36, 56):
+        #     bduty = round(i * body_interval + body_mindc)
+        #     pi.set_servo_pulsewidth(bm, bduty)
+        #     time.sleep(0.1)
+        # time.sleep(0.4)
+
+        for i in range(56, 36, -1):
+            bduty = round(i * body_interval + body_mindc)
+            pi.set_servo_pulsewidth(bm, bduty)
+            print(pi.get_servo_pulsewidth(bm))
+            time.sleep(0.1)
+        time.sleep(0.4)
 
     pi.set_servo_pulsewidth(bm, 0)
 
@@ -175,7 +176,7 @@ if __name__ == "__main__":
         view = Process(target=view.view, args=(frame, HEIGHT, WIDTH, face_location ,view_running, is_detected, ))
         face_tracking = Process(target=face_tracking.face_tracking, args=(face_location, face_tracking_running, pi, ))
         recognition = Process(target=recognition.recognition, args=(frame, face_location, name_index, emotion, is_detected, ))
-        save_emotion = Process(target=save_emotion.save_emotion, args=(is_detected, emotion, name_index, known_face_names,))
+        save_emotion = Process(target=save_emotion.save_emotion, args=(is_detected, emotion, emotion_total, known_face_names, ))
 
         view.start()
         face_tracking.start()

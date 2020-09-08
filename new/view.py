@@ -21,7 +21,7 @@ def view(frame, HEIGHT, WIDTH, face_location, is_running, is_detected, ):
             #frame_ 의 해상도를 낮춰서 haar 에 넣어볼까?
 
             # flip 추가!!!!!!!!!!
-
+            frame_ = cv2.flip(frame_, 0)
             gray = cv2.cvtColor(frame_, cv2.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(gray, 1.3, 5)
             # cv2.putText(frame_, info, (5, 15), font, 0.5, (255, 0, 255), 1)
