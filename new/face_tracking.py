@@ -31,7 +31,7 @@ def face_tracking(face_location, is_running, pi, is_detected):
             
             x_pos = (x + w/2 - 240)/240
             y_pos = (y + h/2 - 180)/180
-            print("x: ", x_pos,"y:", y_pos)
+            # print("x: ", x_pos,"y:", y_pos)
             
             # time.sleep(0.1)
         if is_detected.value == 1:
@@ -42,7 +42,8 @@ def face_tracking(face_location, is_running, pi, is_detected):
             hor_error_Prev = x_pos
             ver_error_Prev = y_pos
         else:
-            print("noface")
+            pass
+            # print("noface")
     
 
 def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, head_maxdc, head_interval, pi, hm, ):
@@ -69,11 +70,11 @@ def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, h
         head_duty = head_maxdc
     
     if head_duty == past_dc:
-        print(head_duty, past_dc,'steady')
+        # print(head_duty, past_dc,'steady')
         head_duty = past_dc
         pi.set_servo_pulsewidth(hm, 0)
     else:
-        print(head_duty, past_dc,'move')
+        # print(head_duty, past_dc,'move')
         pi.set_servo_pulsewidth(hm, head_duty)
         time.sleep(waittime)
         pi.set_servo_pulsewidth(hm, 0)
@@ -104,11 +105,11 @@ def bodyServo(error_Now, waittime, past_dc, error_Sum, error_Prev, body_mindc, b
         body_duty = body_maxdc
     
     if body_duty == past_dc:
-        print(body_duty, past_dc,'steady')
+        # print(body_duty, past_dc,'steady')
         body_duty = past_dc
         pi.set_servo_pulsewidth(bm, 0)
     else:
-        print(body_duty, past_dc,'move')
+        # print(body_duty, past_dc,'move')
         pi.set_servo_pulsewidth(bm, body_duty)
         time.sleep(waittime)
         pi.set_servo_pulsewidth(bm, 0)
