@@ -46,7 +46,7 @@ def save_emotion(is_detected, emotion, emotion_total, name_index, known_face_nam
                     total_emotions[name] = [0,0,0,0,0,0,0]
                 
                 with open("emotions/emotions.json", "w") as f:
-                    json.dump(time_total_emotions, f, indent=2)
+                    json.dump(time_total_emotions, f)
                     print("saved!")
 
                 res = requests.post(URL, data=json.dumps(time_total_emotions))
