@@ -2,7 +2,7 @@ import pigpio
 import time
 
 # 프로세스
-def face_tracking(face_location, is_running, pi, ):
+def face_tracking(face_location, is_running, pi, is_detected):
     
     bm = 5
     hm = 6
@@ -19,8 +19,8 @@ def face_tracking(face_location, is_running, pi, ):
     hor_error_Prev = 0
     ver_error_Sum = 0
     ver_error_Prev = 0
-    past_hor_dc = 1700
-    past_ver_dc = 1600
+    past_hor_dc = 1500
+    past_ver_dc = 1300
     # 모터 제어 파트 추가
     while True:
         for (top, right, bottom, left) in face_location.array:
@@ -28,19 +28,21 @@ def face_tracking(face_location, is_running, pi, ):
             w = right - left
             y = top
             h = bottom - top
+            
             x_pos = (x + w/2 - 240)/240
             y_pos = (y + h/2 - 180)/180
-            #print("x: ", x_pos,"y:", y_pos)
+            print("x: ", x_pos,"y:", y_pos)
             
             # time.sleep(0.1)
-
-        
-        hor_error_Sum = hor_error_Sum + x_pos
-        ver_error_Sum = ver_error_Sum + y_pos
-        past_ver_dc = headServo(y_pos, 0.01, past_ver_dc, ver_error_Sum, ver_error_Prev, head_mindc, head_maxdc, head_interval, pi, hm, )
-        past_hor_dc = bodyServo(x_pos, 0.01, past_hor_dc, hor_error_Sum, hor_error_Prev, body_mindc, body_maxdc, body_interval, pi, bm)
-        hor_error_Prev = x_pos
-        ver_error_Prev = y_pos
+        if is_detected.value == 1:
+            hor_error_Sum = hor_error_Sum + x_pos
+            ver_error_Sum = ver_error_Sum + y_pos
+            past_ver_dc = headServo(y_pos, 0.01, past_ver_dc, ver_error_Sum, ver_error_Prev, head_mindc, head_maxdc, head_interval, pi, hm, )
+            past_hor_dc = bodyServo(x_pos, 0.01, past_hor_dc, hor_error_Sum, hor_error_Prev, body_mindc, body_maxdc, body_interval, pi, bm, )
+            hor_error_Prev = x_pos
+            ver_error_Prev = y_pos
+        else:
+            print("noface")
     
 
 def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, head_maxdc, head_interval, pi, hm, ):
@@ -54,7 +56,7 @@ def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, h
     
     ctrlval = -(Kp*error + Ki*error_sum*waittime + Kd*error_diff)
     
-    if abs(ctrlval) < 0.008:
+    if abs(ctrlval) < 0.01:
         ctrlval = 0
     ctrlval = round(ctrlval, 1)
            
@@ -81,7 +83,7 @@ def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, h
 def bodyServo(error_Now, waittime, past_dc, error_Sum, error_Prev, body_mindc, body_maxdc, body_interval, pi, bm, ):    
     Kp = 0.15
     Ki = 0
-    Kd = 0.02
+    Kd = 0
     
     error = error_Now
     error_sum = error_Sum + error
@@ -89,7 +91,7 @@ def bodyServo(error_Now, waittime, past_dc, error_Sum, error_Prev, body_mindc, b
     
     ctrlval = -(Kp*error + Ki*error_sum*waittime + Kd*error_diff)
     
-    if abs(ctrlval) < 0.008:
+    if abs(ctrlval) < 0.004:
         ctrlval = 0
     ctrlval = round(ctrlval, 1)
            

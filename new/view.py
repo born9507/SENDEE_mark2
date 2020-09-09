@@ -48,9 +48,9 @@ def view(frame, HEIGHT, WIDTH, face_location, is_running, is_detected, ):
                     is_detected.value = 0
                 else:
                     pass
-            # frame = cv2.flip(frame, 1)
-            # cv2.imshow("frame", frame_)
-            # if cv2.waitKey(1) == ord('q'): break
+            #frame = cv2.flip(frame, 1)
+            #cv2.imshow("frame", frame_)
+            #if cv2.waitKey(1) == ord('q'): break
         else:
             time.sleep(1)
             pass
