@@ -176,7 +176,7 @@ if __name__ == "__main__":
         view = Process(target=view.view, args=(frame, HEIGHT, WIDTH, face_location ,view_running, is_detected, ))
         face_tracking = Process(target=face_tracking.face_tracking, args=(face_location, face_tracking_running, pi, ))
         recognition = Process(target=recognition.recognition, args=(frame, face_location, name_index, emotion, is_detected, ))
-        save_emotion = Process(target=save_emotion.save_emotion, args=(is_detected, emotion, emotion_total, known_face_names, ))
+        save_emotion = Process(target=save_emotion.save_emotion, args=(is_detected, emotion, emotion_total, name_index, known_face_names, ))
 
         view.start()
         face_tracking.start()
@@ -188,8 +188,6 @@ if __name__ == "__main__":
             # print(is_detected.value)
 
             # print(np.argmax(emotion.array))
-            # print(known_face_names[name_index.value])
-            # print(emotion_dict[np.argmax(emotion.array)])
             time.sleep(0.5)
             pass
         

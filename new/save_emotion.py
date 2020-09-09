@@ -4,27 +4,11 @@ import urllib.request
 import numpy as np
 import json
 from datetime import datetime
-from ftplib import FTP
 
 URL_google = "8.8.8.8"
 URL = "http://sangw.iptime.org"
 
-def internet_on():
-    try:
-        urllib.request.urlopen(URL_google, timeout=1)
-        return True
-    except urllib.request.URLError as err: 
-        return False
-
-def server_on():
-    try:
-        urllib.request.urlopen(URL, timeout=1)
-        return True
-    except urllib.request.URLError as err: 
-        return False
-
-
-def save_emotion(is_detected, emotion, name_index,known_face_names, ):
+def save_emotion(is_detected, emotion, emotion_total, name_index, known_face_names, ):
     with open("emotions/emotions.json", "r") as f:
         time_total_emotions = json.load(f)
     
@@ -34,7 +18,6 @@ def save_emotion(is_detected, emotion, name_index,known_face_names, ):
 
     check_sec = time.gmtime(time.time())
     check_min = time.gmtime(time.time())
-    webtime = time.time()
     # emotion_total 은 서버로 전송 후 초기화
     # 서버에서는 받아서 합산하도록
 
@@ -64,38 +47,49 @@ def save_emotion(is_detected, emotion, name_index,known_face_names, ):
                 
                 with open("emotions/emotions.json", "w") as f:
                     json.dump(time_total_emotions, f, indent=2)
+                    print("saved!")
 
-                for name in known_face_names:
-                    total_emotions[name] = [0,0,0,0,0,0,0]
+                res = requests.post(URL, data=json.dumps(time_total_emotions))
+                if res.status_code == 200:
+                    print("Success")
+                else:
+                    print("Error")
                 
                 check_min = time.gmtime(time.time())
-                
-            
-            # 5분마다 전송 시도
-            if time.time() - webtime > 30: 
-                # 네트워크 연결 확인    
-                if internet_on():
-                    print("Internet Connected")
-                    if server_on():
-                        print("Server Ready, Send Json ...")
-                        res = requests.post(URL, data=json.dumps(time_total_emotions))
-                        if res.status_code != 200:
-                            print("error code")
-                            webtime = time.time() - 5
-                        else:
-                            print("Success!")
-                            # time_total_emotions={}
-                            webtime = time.time()
-                    else:
-                        print("No server connection")
-                        webtime = time.time() - 5
-                else:
-                    print("No network")
-                    webtime = time.time() - 5
 
+
+                # 네트워크 연결 확인    
+                # if internet_on() == True:
+                #     print("Internet Connected")
+                #     if server_on() == True:
+                #         print("Server Ready, Send Json ...")
+                #         res = requests.post(URL, data=json.dumps(time_total_emotions))
+                #         if res.status_code != 200:
+                #             print("error code")
+                #         else:
+                #             print("Success!")
+                #     else:
+                #         print("No server connection")
+                # else:
+                #     print("No network")
+            
         except ConnectionError:
             pass
         except KeyboardInterrupt:
             break
         except:
             pass
+
+def internet_on():
+    try:
+        urllib.request.urlopen(URL_google, timeout=1)
+        return True
+    except urllib.request.URLError as err: 
+        return False
+
+def server_on():
+    try:
+        urllib.request.urlopen(URL, timeout=1)
+        return True
+    except urllib.request.URLError as err: 
+        return False
