@@ -6,9 +6,17 @@ import json
 from datetime import datetime
 from ftplib import FTP
 
+URL_google = "8.8.8.8"
 URL = "http://sangw.iptime.org"
 
 def internet_on():
+    try:
+        urllib.request.urlopen(URL_google, timeout=1)
+        return True
+    except urllib.request.URLError as err: 
+        return False
+
+def server_on():
     try:
         urllib.request.urlopen(URL, timeout=1)
         return True
@@ -49,6 +57,11 @@ def save_emotion(is_detected, emotion, name_index,known_face_names, ):
                 print(now_min)
                 time_total_emotions[now_min] = total_emotions
                 
+                # 1 분마다 따로 저장하므로, 1분 지나면 total_emotions 는 다시 초기화 해줘야 다음 시간에 다시 0부터 합
+                total_emotions = {}
+                for name in known_face_names:
+                    total_emotions[name] = [0,0,0,0,0,0,0]
+                
                 with open("emotions/emotions.json", "w") as f:
                     json.dump(time_total_emotions, f, indent=2)
 
@@ -59,20 +72,27 @@ def save_emotion(is_detected, emotion, name_index,known_face_names, ):
                 
             
             # 5분마다 전송 시도
-            if time.time() - webtime > 2: 
+            if time.time() - webtime > 30: 
                 # 네트워크 연결 확인    
-                if internet_on() == True:
+                if internet_on():
                     print("Internet Connected")
-                    # print(json.dumps(time_total_emotions))
-                    requests.post(URL, data=json.dumps(time_total_emotions))
-                        
-                    webtime = time.time()
-                
-                # 전송 실패시 5초 뒤에 다시 시도
+                    if server_on():
+                        print("Server Ready, Send Json ...")
+                        res = requests.post(URL, data=json.dumps(time_total_emotions))
+                        if res.status_code != 200:
+                            print("error code")
+                            webtime = time.time() - 5
+                        else:
+                            print("Success!")
+                            # time_total_emotions={}
+                            webtime = time.time()
+                    else:
+                        print("No server connection")
+                        webtime = time.time() - 5
                 else:
                     print("No network")
                     webtime = time.time() - 5
-                pass
+
         except ConnectionError:
             pass
         except KeyboardInterrupt:
