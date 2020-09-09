@@ -30,8 +30,8 @@ def face_tracking(face_location, is_running, pi, is_detected):
             h = bottom - top
             
             x_pos = (x + w/2 - 240)/240
-            y_pos = (y + h/2 - 180)/180
-            # print("x: ", x_pos,"y:", y_pos)
+            y_pos = (y + h/2 - 180)/180 + 0.25
+            print("x: ", x_pos,"y:", y_pos)
             
             # time.sleep(0.1)
         if is_detected.value == 1:
@@ -57,7 +57,7 @@ def headServo(error_Now, waittime, past_dc, error_Sum, error_Prev, head_mindc, h
     
     ctrlval = -(Kp*error + Ki*error_sum*waittime + Kd*error_diff)
     
-    if abs(ctrlval) < 0.01:
+    if abs(ctrlval) < 0.02:
         ctrlval = 0
     ctrlval = round(ctrlval, 1)
            
