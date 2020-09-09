@@ -1,3 +1,4 @@
+
 from multiprocessing import Process, Value
 import multiprocessing
 from shared_ndarray import SharedNDArray
@@ -28,25 +29,19 @@ def expression():
     doridori.join()
     pass
 def display(filename, name, emotion): 
-    cap = cv2.VideoCapture(f"display/{filename}.gif")
     
-    with open("pkl/emotion.pkl", "wb") as file:
-        pickle.dump(filename, file)
+    cap = cv2.VideoCapture(f"display/{filename}.gif")
 
     while True:
         ret, frame = cap.read()
         if ret==False: break
 
-        #뉴트럴만 좀 빨리 재생하도록
-        #프레임당 33ms 기다리고 다음 프레임 재생
         if filename == "neutral1":
             cv2.waitKey(11)
         else:
             cv2.waitKey(33)
     
-        ##인식 되고, 알때
-        ##인식 되고, 모를때
-        ##인식 안될때
+
         font = cv2.FONT_HERSHEY_DUPLEX
 
         if name =="noone":
