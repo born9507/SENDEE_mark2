@@ -1,6 +1,7 @@
 from multiprocessing import Process
 import cv2
 import random
+import time
 
 def emo2reaction(name, emotion):
     if emotion == 'Neutral':
@@ -116,12 +117,23 @@ def noface():
         display("neutral2", name, emotion) #눈깜박
         display("neutral1", name, emotion) #무표정
 
+def randMove(pi, randomNumber):
+    # if not isMove:
+    #     isMove = True
+    if randomNumber%8 == 1:
+        left_arm(pi)
+    elif randomNumber%8 == 2:
+        right_arm(pi)
+    elif randomNumber%8 == 3:
+        doridori(pi)
+    elif randomNumber%8 == 4:
+        nodnodnod(pi)
+        # isMove = False
 
-
-def left_arm(): 
+def left_arm(pi): 
     la = 13 
     ra = 19  
-
+    
     right_mindc = 1700
     right_maxdc = 950
     right_interval = (right_maxdc - right_mindc)/40
@@ -148,7 +160,7 @@ def left_arm():
     pi.set_servo_pulsewidth(la, 0)
     pi.set_servo_pulsewidth(ra, 0)
 
-def right_arm(): 
+def right_arm(pi): 
 
     la = 13 
     ra = 19  
@@ -180,7 +192,7 @@ def right_arm():
     pi.set_servo_pulsewidth(ra, 0)
 
 
-def doridori(): 
+def doridori(pi): 
     bm = 5
 
     body_mindc = 600
@@ -203,7 +215,7 @@ def doridori():
 
     pi.set_servo_pulsewidth(bm, 0)
 
-def nodnodnod():
+def nodnodnod(pi):
     hm = 6
 
     head_mindc = 1200

@@ -65,14 +65,13 @@ if __name__ == "__main__":
         face_tracking.start()
         recognition.start()
         save_emotion.start()
-
         while True:
             # is_running 제어하기
             name = known_face_names[name_index.value]
             emotion_ = emotion_dict[np.argmax(emotion.array)]
             expression.emo2reaction(name, emotion_)
             # if is_detected.value == 1:
-
+            expression.randMove(pi, random.randint(0, 8))
             time.sleep(0.5)
             pass
         
