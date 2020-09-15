@@ -1,4 +1,3 @@
-
 from multiprocessing import Process, Value
 import multiprocessing
 from shared_ndarray import SharedNDArray
@@ -65,6 +64,7 @@ if __name__ == "__main__":
         face_tracking.start()
         recognition.start()
         save_emotion.start()
+        
         while True:
             # is_running 제어하기
             name = known_face_names[name_index.value]
