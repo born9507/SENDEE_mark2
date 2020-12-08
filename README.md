@@ -26,15 +26,15 @@
 
 ### Design
 
-<img src="README.assets/그림1.png" width="50%"/>
+<img src="README.assets/그림1.png" width="90%"/>
 
 ### Hardware
 
-<img src="README.assets/SENDEE_-4.jpg" width="80%" />
+<img src="README.assets/SENDEE_-4.jpg" width="90%" />
 
 ### Software
 
-<img src="README.assets/그림2.png" width="80%"/>
+<img src="README.assets/그림2.png" width="90%"/>
 
 
 
